@@ -1,0 +1,3 @@
+<label>Título <input type="text" name="title" maxlength="200" value="{{ form.get('title', '') or '' }}" required></label>
+<label>Descripción <textarea name="description" maxlength="2000" rows="4">{{ form.get('description', '') or '' }}</textarea></label>
+<label>Fecha límite <input type="date" name="due_date" value="{{ form.get('due_date', '') or '' }}"></label>

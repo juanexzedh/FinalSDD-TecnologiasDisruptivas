@@ -1,0 +1,4 @@
+Estos logs se generaron en el entorno de Claude (Linux), NO en el equipo de ustedes.
+- pytest_inc2_ROJO.txt : pruebas del incremento 2 ejecutadas ANTES de existir el codigo (fallan por importacion).
+- pytest_final_VERDE.txt: suite completa (102 pruebas) en verde con el codigo final.
+No sustituyen su evidencia: vuelvan a ejecutar pytest -v en su maquina y guarden sus propias capturas.

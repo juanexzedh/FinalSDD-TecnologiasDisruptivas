@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Registro</h1>
+<form method="post" action="{{ url_for('auth.register') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Correo <input type="email" name="email" value="{{ email or '' }}" required></label>
+  <label>Contraseña (mín. 8, con letra y número) <input type="password" name="password" required></label>
+  <button type="submit">Crear cuenta</button>
+</form>
+<p>¿Ya tienes cuenta? <a href="{{ url_for('auth.login') }}">Inicia sesión</a></p>
+{% endblock %}

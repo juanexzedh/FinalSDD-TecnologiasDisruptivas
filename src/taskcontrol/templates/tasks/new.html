@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Nueva tarea</h1>
+<form method="post" action="{{ url_for('tasks.create_task') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% include "tasks/_form_fields.html" %}
+  <button type="submit">Crear</button> <a href="{{ url_for('tasks.list_tasks') }}">Cancelar</a>
+</form>
+{% endblock %}

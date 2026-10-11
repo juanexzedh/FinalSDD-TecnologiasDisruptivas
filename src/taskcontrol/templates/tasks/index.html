@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Mis tareas</h1>
+<nav class="filters">
+  {% for key, label in [('all','Todas'),('pending','Pendientes'),('in_progress','En progreso'),('completed','Completadas')] %}
+    <a href="{{ url_for('tasks.list_tasks', status=key) }}" class="{{ 'active' if current_filter == key else '' }}">{{ label }}</a>
+  {% endfor %}
+  <a class="btn" href="{{ url_for('tasks.new_task_form') }}">+ Nueva tarea</a>
+</nav>
+{% if not tasks %}<p class="empty">No hay tareas.</p>{% endif %}
+<ul class="tasks">
+{% for t in tasks %}
+  <li class="task {{ t.status }}">
+    <div class="title">{{ t.title }}</div>
+    <div class="meta">
+      <span class="badge {{ t.status }}">{{ labels[t.status] }}</span>
+      {% if t.due_date %}<span>Vence: {{ t.due_date.isoformat() }}</span>{% endif %}
+    </div>
+    {% if t.description %}<p class="desc">{{ t.description }}</p>{% endif %}
+    <div class="actions">
+      {% if t.status == 'completed' %}
+        <span class="badge completed">Completada</span>
+        <form method="post" action="{{ url_for('tasks.reopen_task', task_id=t.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit">Reabrir</button>
+        </form>
+      {% else %}
+        {% for key in ['pending','in_progress','completed'] if key != t.status %}
+        <form method="post" action="{{ url_for('tasks.change_status', task_id=t.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="status" value="{{ key }}">
+          <button type="submit">→ {{ labels[key] }}</button>
+        </form>
+        {% endfor %}
+      {% endif %}
+      <a href="{{ url_for('tasks.edit_task_form', task_id=t.id) }}">Editar</a>
+      <form method="post" action="{{ url_for('tasks.delete_task', task_id=t.id) }}" onsubmit="return confirm('¿Eliminar esta tarea? Esta acción no se puede deshacer.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="danger">Eliminar</button>
+      </form>
+    </div>
+  </li>
+{% endfor %}
+</ul>
+{% endblock %}
