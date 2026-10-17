@@ -16,7 +16,7 @@ erDiagram
     User ||--o{ Notification : "recibe"
     User ||--o{ PasswordResetToken : "solicita"
     Category ||--o{ Task : "agrupa (ON DELETE SET NULL)"
-    Task ||--o{ Notification : "origina (ON DELETE CASCADE)"
+    Task ||--o{ Notification : "referencia (ON DELETE SET NULL)"
 
     User {
         int id PK
@@ -51,7 +51,7 @@ erDiagram
     Notification {
         int id PK
         int user_id FK "Destinatario (NOT NULL, ON DELETE CASCADE)"
-        int task_id FK "Tarea referenciada (NOT NULL, ON DELETE CASCADE)"
+        int task_id FK "Tarea referenciada (nullable, ON DELETE SET NULL)"
         string title
         string message
         boolean is_read "default False"
@@ -106,8 +106,8 @@ updated_at     DateTime(timezone=True)  No          Default: utcnow, onupdate: u
 ```
 
 **Reglas de Dominio de Asignación**:
-- `user_id` representa al autor/creador inmutable de la tarea. Solo el creador tiene permisos para reasignar la tarea a terceros o eliminarla lógicamente.
-- `assignee_id` es el usuario asignado actualmente. Puede ser igual a `user_id` (auto-asignación), un usuario registrado distinto, o `NULL` (desasignada).
+- `user_id` representa al autor/creador inmutable de la tarea. En virtud de la **matriz de permisos (`FR-018`)**, solo el creador tiene facultades para editar el contenido básico (título, descripción, fecha límite), cambiar la prioridad, asignar categoría, reasignar o desasignar la tarea, y eliminarla lógicamente.
+- `assignee_id` es el usuario asignado actualmente. Puede ser igual a `user_id` (auto-asignación), un usuario registrado distinto, o `NULL` (desasignada). El asignatario tiene permisos exclusivamente para visualizar la tarea y cambiar su estado (`pending`, `in_progress`, `completed`).
 - Si la cuenta del usuario asignado es eliminada en el sistema, `assignee_id` pasa automáticamente a `NULL` mediante `ON DELETE SET NULL`, preservando la tarea y su creador original intactos.
 
 ---
@@ -123,8 +123,8 @@ Columna        Tipo                     Nullable    Default / Notas
 ─────────────────────────────────────────────────────────────────────────────
 id             Integer                  No          Primary Key, Autoincrement
 user_id        Integer                  No          FK -> users(id) ON DELETE CASCADE [Destinatario]
-task_id        Integer                  No          FK -> tasks(id) ON DELETE CASCADE [Tarea]
-title          String(150)              No          Título de la notificación
+task_id        Integer                  Yes         FK -> tasks(id) ON DELETE SET NULL [NUEVO: Tarea referenciada]
+title          String(150)              No          Título de la notificación ("Nueva tarea asignada" / "Asignación retirada")
 message        String(500)              No          Mensaje explicativo con actor y tarea
 is_read        Boolean                  No          Default: False, server_default: '0'
 read_at        DateTime(timezone=True)  Yes         Default: None
@@ -139,7 +139,7 @@ created_at     DateTime(timezone=True)  No          Default: utcnow
 **Reglas de Dominio de Notificaciones**:
 - Una notificación pertenece exclusivamente al usuario receptor (`user_id`).
 - Al marcarse como leída: `is_read = True`, `read_at = utcnow()`. El registro **persiste** en el historial.
-- Si la tarea asociada es eliminada físicamente de la base de datos (o la cuenta del usuario es borrada), las notificaciones se eliminan en cascada (`ON DELETE CASCADE`).
+- **Preservación ante borrado de tareas**: Si la tarea asociada es eliminada lógicamente (o físicamente de la base de datos), las notificaciones asociadas NO se destruyen: persisten en el historial del usuario receptor. Si se borra físicamente la tarea, `task_id` pasa a `NULL` (`ON DELETE SET NULL`). Si la cuenta del usuario receptor es eliminada, sus notificaciones se eliminan en cascada (`ON DELETE CASCADE`). Al acceder a una notificación cuya tarea fue eliminada, el sistema expone que el recurso ya no está disponible.
 
 ---
 

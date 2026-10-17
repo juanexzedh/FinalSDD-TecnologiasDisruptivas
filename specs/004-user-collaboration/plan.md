@@ -11,10 +11,10 @@
 Implementar el cuarto incremento funcional de TaskControl (Colaboración entre Usuarios) consolidando la arquitectura monolítica en 4 capas y el cumplimiento riguroso de la constitución del proyecto:
 1. **Asignación y delegación de tareas (HU-10)**: Extensión del modelo `Task` con un campo explícito y separado `assignee_id` (preservando `user_id` como creador y propietario legítimo), con validación obligatoria en backend de que el destinatario sea un usuario registrado activo (Principio VII), y registro inmutable en auditoría (`TASK_ASSIGNED`, `TASK_UNASSIGNED`, Principio VIII).
 2. **Listado de tareas con procedencia y distinción visual (HU-10)**: Ampliación de `GET /tasks` con el parámetro de procedencia `scope` (`'all'`, `'created'`, `'assigned'`), distinguiendo visualmente con insignias claras las tareas creadas por el usuario de las tareas asignadas por terceros, sin romper los filtros preexistentes de estado, categoría y ordenamiento por prioridad.
-3. **Notificaciones internas atómicas (HU-11)**: Nueva entidad `Notification` persistida en base de datos. La notificación se crea atómicamente en la misma transacción relacional del servicio de asignación si el destinatario es distinto al actor (descartando alertas superfluas en auto-asignación).
-4. **Gestión de lectura y retención histórica (HU-11)**: Endpoints dedicados para listar notificaciones (`GET /notifications`), marcar como leída individualmente (`POST /notifications/<id>/read`) o en lote (`POST /notifications/read-all`). Las notificaciones leídas **persisten** en el historial del usuario (`is_read=True`, `read_at`), no se destruyen automáticamente.
-5. **Migraciones de esquema (Principio VI)**: Script incremental con Flask-Migrate que incorpora `assignee_id` nullable con política `ON DELETE SET NULL` y crea la tabla `notifications`, garantizando la continuidad e integridad de todas las tareas existentes de incrementos anteriores.
-6. **Pruebas automatizadas bloqueantes (Principio IV)**: Suite de pruebas en la capa de servicios que certifican la generación de exactamente una notificación al asignar a otro usuario, el rechazo ante correos no registrados, y la presencia de la tarea en el listado del asignatario.
+3. **Notificaciones internas atómicas (HU-11)**: Nueva entidad `Notification` persistida en base de datos con clave foránea `task_id` nullable (`ON DELETE SET NULL`). La notificación se crea atómicamente en la misma transacción relacional del servicio de asignación: en asignación inicial o reasignación se notifica al nuevo asignatario; en reasignación o desasignación se notifica adicionalmente al asignatario previo para informarle la revocación (descartando alertas en auto-asignación).
+4. **Gestión de lectura y retención histórica (HU-11)**: Endpoints dedicados para listar notificaciones (`GET /notifications`), marcar como leída individualmente (`POST /notifications/<id>/read`) o en lote (`POST /notifications/read-all`). Las notificaciones leídas **persisten** en el historial del usuario (`is_read=True`, `read_at`), no se destruyen automáticamente, y la eliminación lógica de una tarea conserva sus notificaciones históricas.
+5. **Migraciones de esquema (Principio VI)**: Script incremental con Flask-Migrate que incorpora `assignee_id` nullable con política `ON DELETE SET NULL` y crea la tabla `notifications` con `task_id` nullable (`ON DELETE SET NULL`), garantizando la continuidad e integridad de todas las tareas existentes de incrementos anteriores.
+6. **Pruebas automatizadas bloqueantes (Principio IV)**: Suite de pruebas en la capa de servicios que certifican la generación de notificaciones (incluyendo aviso al asignatario previo en reasignación/desasignación), el rechazo ante correos no registrados, la exclusividad del creador en operaciones de edición/reasignación/borrado (`FR-018`), y la presencia de la tarea en el listado del asignatario.
 
 ---
 
@@ -34,8 +34,8 @@ Implementar el cuarto incremento funcional de TaskControl (Colaboración entre U
 - Contratos de endpoints rigurosamente tipados con protección CSRF en todo POST (Principio III y VII).
 - TDD obligatorio y bloqueante antes de escribir lógica de negocio (Principio IV).
 - Simplicidad y YAGNI priorizados (Principio V): notificaciones relacionales simples sin WebSockets ni push externo.
-- Integridad relacional y migraciones reproducibles con Alembic (Principio VI): `ON DELETE SET NULL` en asignatario y `ON DELETE CASCADE` en notificaciones.
-- Seguridad por defecto (Principio VII): validación estricta en el backend de existencia de usuarios, aislamiento por sesión (`@login_required`).
+- Integridad relacional y migraciones reproducibles con Alembic (Principio VI): `ON DELETE SET NULL` en `assignee_id` y `ON DELETE SET NULL` en `notifications.task_id`.
+- Seguridad por defecto (Principio VII): validación estricta en backend de existencia de usuarios, entrada manual de correo exacto sin autocompletar para evitar enumeración, aislamiento por sesión (`@login_required`) y matriz de permisos estricta (`FR-018`).
 - Observabilidad mínima viable (Principio VIII): auditoría con actor, timestamp y metadatos en cada cambio de asignación.  
 **Scale/Scope**: Limitado estrictamente a HU-10 y HU-11. Fuera de alcance: interacción dinámica sin recarga (HU-15) y drag-and-drop (HU-16).
 
@@ -196,11 +196,16 @@ class Task(db.Model):
 2. **Desasignación y Borrado de Cuentas**: Si una tarea asignada queda sin responsable (`assignee_id = null`), `user_id` garantiza que la tarea nunca quede huérfana. Si la cuenta del usuario asignado se elimina, `ON DELETE SET NULL` desasigna la tarea pero el creador conserva su tarea intacta.
 3. **Compatibilidad hacia Atrás (Principio VI)**: Mantener `user_id` permite que todas las migraciones, consultas existentes y registros de auditoría de los Incrementos 1, 2 y 3 permanezcan 100% válidos sin necesidad de reescribir consultas históricas.
 
+#### Matriz de Permisos de Colaboración (`FR-018`):
+En cumplimiento estricto del Principio VII (Seguridad por defecto) y de las clarificaciones acordadas:
+- **Usuario Creador (`task.user_id == actor_id`)**: Control absoluto sobre la tarea. Puede verla en `/tasks` permanentemente (con badge de asignación), modificar título/descripción/fecha límite (`/tasks/<id>/edit`), cambiar prioridad (`/tasks/<id>/priority`), asignar/remover categoría (`/tasks/<id>/category`), reasignar o desasignar (`/tasks/<id>/assign`), y eliminarla lógicamente (`/tasks/<id>/delete`).
+- **Usuario Asignatario (`task.assignee_id == actor_id` y `task.user_id != actor_id`)**: Permisos estrictamente acotados a la operación de la tarea. **Únicamente puede ver la tarea y cambiar su estado** (`pending`, `in_progress`, `completed` vía `/tasks/<id>/status`). Cualquier intento por parte del asignatario de editar contenido, alterar prioridad, cambiar categoría, reasignar, desasignar o eliminar la tarea es bloqueado categóricamente por la capa de servicios lanzando `TaskAccessDeniedError` (HTTP `403 Forbidden`).
+
 ---
 
 ### 2. Modelo de Datos de `Notification` (Punto 2 del Requerimiento)
 
-La nueva entidad `Notification` (`src/taskcontrol/models/notification.py`) se modela con los atributos esenciales:
+La nueva entidad `Notification` (`src/taskcontrol/models/notification.py`) se modela con los atributos esenciales y preservación histórica:
 
 ```python
 from datetime import datetime, timezone
@@ -212,8 +217,8 @@ class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # Usuario receptor/destinatario de la alerta:
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    # Tarea objeto de la asignación:
-    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id', ondelete='CASCADE'), nullable=False, index=True)
+    # Tarea objeto de la notificación (nullable con SET NULL para preservar historial si la tarea se elimina):
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id', ondelete='SET NULL'), nullable=True, index=True)
     
     title = db.Column(db.String(150), nullable=False)
     message = db.Column(db.String(500), nullable=False)
@@ -223,7 +228,7 @@ class Notification(db.Model):
 
     # Relaciones:
     user = db.relationship('User', backref=db.backref('notifications', lazy='dynamic', cascade='all, delete-orphan'))
-    task = db.relationship('Task', backref=db.backref('notifications', lazy='dynamic', cascade='all, delete-orphan'))
+    task = db.relationship('Task', backref=db.backref('notifications', lazy='dynamic'))
 
     __table_args__ = (
         db.Index('ix_notifications_user_id_is_read', 'user_id', 'is_read'),
@@ -232,7 +237,7 @@ class Notification(db.Model):
 
 - **Pertenencia**: Pertenece estrictamente al destinatario (`user_id`).
 - **Estado de lectura**: Inicialmente `is_read = False`. Al leerse, `is_read = True` y `read_at = utcnow()`.
-- **Persistencia**: La notificación **permanece en la base de datos tras ser leída**, permitiendo auditoría y consulta histórica en `/notifications` hasta que el usuario decida borrarla explícitamente.
+- **Persistencia e Integridad ante Eliminación de Tareas**: La notificación **permanece en la base de datos tras ser leída** y también **persiste si la tarea referenciada es eliminada lógicamente** (`is_deleted=True`) o físicamente (`task_id` pasa a `NULL` mediante `ON DELETE SET NULL`). Si el usuario hace clic en una notificación cuya tarea asociada fue eliminada, el sistema informa con un mensaje descriptivo que la tarea ya no está disponible, sin eliminar la notificación de su bandeja histórica.
 
 ---
 
@@ -241,11 +246,11 @@ class Notification(db.Model):
 #### 3.1 Asignar / Reasignar Tarea: `POST /tasks/<int:task_id>/assign`
 - **Controlador**: `src/taskcontrol/blueprints/tasks.py` delegando en `TaskService.assign_task(actor_id, task_id, assignee_email)`.
 - **Seguridad**: `@login_required` + protección CSRF.
-- **Payload**: `{ "assignee_email": "colaborador@empresa.com", "csrf_token": "..." }` (o vacío para desasignar).
+- **Payload**: `{ "assignee_email": "colaborador@empresa.com", "csrf_token": "..." }` (o vacío/null para desasignar). En interfaz web se implementa mediante un campo de texto libre `<input type="email" name="assignee_email">` sin autocompletado ni selectores para evitar la enumeración de usuarios (Principio VII).
 - **Validaciones**:
   - Tarea existe y no está eliminada (`is_deleted == False`).
-  - Actor en sesión debe ser el creador (`task.user_id == actor_id`) o el asignatario actual.
-  - Validación de correo en backend: si no está vacío, busca usuario en `User`. Si no existe, rechaza de inmediato (HTTP 400 `USER_NOT_FOUND`).
+  - **Autorización estricta (`FR-018`)**: El actor en sesión DEBE ser exclusivamente el creador original (`task.user_id == actor_id`). Los asignatarios no tienen permitido reasignar ni desasignar tareas (HTTP 403 `FORBIDDEN`).
+  - Validación de correo en backend: si no está vacío, busca usuario en `User` (`.strip().lower()`). Si no existe, rechaza de inmediato (HTTP 400 `USER_NOT_FOUND`).
 - **Respuesta**: `302 Found` (web) con flash `"Tarea asignada exitosamente a ..."` o `200 OK` JSON.
 
 #### 3.2 Listar Notificaciones: `GET /notifications`
@@ -313,15 +318,15 @@ class Notification(db.Model):
 
 ### 4. Punto y Atomicidad de Creación de la Notificación (Punto 4 del Requerimiento)
 
-La creación de la notificación se realiza **dentro del mismo servicio de asignación (`TaskService.assign_task`) y en la misma transacción relacional de base de datos**:
+La creación de la notificación se realiza **dentro del mismo servicio de asignación (`TaskService.assign_task`) y en la misma transacción relacional de base de datos**, notificando a ambas partes cuando corresponda:
 
 ```python
 def assign_task(actor_id: int, task_id: int, assignee_email: str | None) -> Task:
     task = Task.query.filter_by(id=task_id, is_deleted=False).first()
     if not task:
         raise TaskNotFoundError("Tarea no encontrada.")
-    if task.user_id != actor_id and task.assignee_id != actor_id:
-        raise TaskAccessDeniedError("No tiene permisos para modificar la asignación de esta tarea.")
+    if task.user_id != actor_id:
+        raise TaskAccessDeniedError("Solo el creador original de la tarea tiene permisos para asignar o reasignar.")
 
     previous_assignee_id = task.assignee_id
     new_assignee = None
@@ -342,16 +347,33 @@ def assign_task(actor_id: int, task_id: int, assignee_email: str | None) -> Task
     # 1. Actualiza la entidad Task
     task.assignee_id = new_assignee_id
 
-    # 2. Genera la notificación interna SOLO si se asignó a un tercero (no auto-asignación)
+    # 2. Genera notificaciones internas inmediatas (sin auto-alerta):
+    actor = User.query.get(actor_id)
+    
+    # 2a. Notificación al nuevo asignatario (si no es auto-asignación):
     if new_assignee_id is not None and new_assignee_id != actor_id:
-        actor = User.query.get(actor_id)
-        notification = Notification(
+        notification_new = Notification(
             user_id=new_assignee_id,
             task_id=task.id,
             title="Nueva tarea asignada",
             message=f"El usuario {actor.email} te ha asignado la tarea '{task.title}'."
         )
-        db.session.add(notification)
+        db.session.add(notification_new)
+
+    # 2b. Notificación al asignatario previo (si existía, no es el actor y es distinto al nuevo asignatario):
+    if previous_assignee_id is not None and previous_assignee_id != actor_id and previous_assignee_id != new_assignee_id:
+        revocation_msg = (
+            f"El usuario {actor.email} ha reasignado la tarea '{task.title}' a otro colaborador."
+            if new_assignee_id else
+            f"El usuario {actor.email} ha retirado tu asignación de la tarea '{task.title}'."
+        )
+        notification_prev = Notification(
+            user_id=previous_assignee_id,
+            task_id=task.id,
+            title="Asignación de tarea retirada",
+            message=revocation_msg
+        )
+        db.session.add(notification_prev)
 
     # 3. Registra auditoría inmutable
     action = 'TASK_ASSIGNED' if new_assignee_id else 'TASK_UNASSIGNED'
@@ -418,18 +440,18 @@ def upgrade():
     op.create_index('ix_tasks_assignee_id', 'tasks', ['assignee_id'])
     op.create_index('ix_tasks_assignee_id_is_deleted', 'tasks', ['assignee_id', 'is_deleted'])
 
-    # 2. Crear tabla notifications
+    # 2. Crear tabla notifications con task_id nullable y ON DELETE SET NULL
     op.create_table('notifications',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=False),
-        sa.Column('task_id', sa.Integer(), nullable=False),
+        sa.Column('task_id', sa.Integer(), nullable=True),
         sa.Column('title', sa.String(length=150), nullable=False),
         sa.Column('message', sa.String(length=500), nullable=False),
         sa.Column('is_read', sa.Boolean(), server_default='0', nullable=False),
         sa.Column('read_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['task_id'], ['tasks.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['task_id'], ['tasks.id'], ondelete='SET NULL'),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_notifications_user_id', 'notifications', ['user_id'])
@@ -455,34 +477,44 @@ def downgrade():
 
 Conforme al Principio IV (TDD bloqueante), las siguientes pruebas se implementarán en rojo antes de codificar la lógica de negocio:
 
-#### 7.1 Pruebas de Asignación y Notificación (`tests/unit/test_task_service.py`)
+#### 7.1 Pruebas de Asignación, Permisos y Notificaciones Duales (`tests/unit/test_task_service.py`)
 1. **`test_assign_task_creates_exactly_one_notification_for_assignee`**:
    - Asignar una tarea de Usuario 1 a Usuario 2 crea exactamente una fila en `notifications` donde `user_id == usuario_2.id` y `is_read == False`.
 2. **`test_self_assignment_does_not_create_notification`**:
    - Usuario 1 asignándose la tarea a sí mismo actualiza `assignee_id`, pero no inserta ninguna fila en `notifications`.
 3. **`test_assign_task_to_nonexistent_user_raises_error_and_does_not_mutate`**:
    - Intentar asignar a `"no_existe@empresa.com"` lanza `UserNotFoundError`. La tarea mantiene su estado previo y no se emiten notificaciones ni logs falsos.
-4. **`test_unassign_task_sets_assignee_id_to_null_and_audits`**:
-   - Enviar correo vacío desvincula el asignatario (`assignee_id = None`) y registra `TASK_UNASSIGNED`.
-5. **`test_reassign_task_creates_notification_only_for_new_assignee`**:
-   - Reasignar una tarea de Usuario 2 a Usuario 3 crea una notificación para Usuario 3, no para Usuario 2.
+4. **`test_unassign_task_sets_assignee_id_to_null_and_notifies_previous_assignee`**:
+   - Desasignar una tarea previamente asignada a Usuario 2 desvincula el asignatario (`assignee_id = None`), registra `TASK_UNASSIGNED`, y genera una notificación de revocación/desasignación para Usuario 2.
+5. **`test_reassign_task_creates_notifications_for_both_new_and_previous_assignee`**:
+   - Reasignar una tarea de Usuario 2 a Usuario 3 crea una notificación de nueva asignación para Usuario 3 Y una notificación de desasignación/revocación para Usuario 2.
+6. **`test_assignee_cannot_reassign_nor_unassign_task` (`FR-018`)**:
+   - Un asignatario que intenta reasignar la tarea a otro usuario o desasignarla es bloqueado con `TaskAccessDeniedError` (HTTP 403 Forbidden).
+7. **`test_assignee_cannot_edit_nor_delete_task` (`FR-018`)**:
+   - Un asignatario que intenta editar título/descripción/fecha, cambiar prioridad, categoría o eliminar la tarea recibe `TaskAccessDeniedError`.
+8. **`test_assignee_can_change_task_status` (`FR-018`)**:
+   - El asignatario puede cambiar válidamente el estado de la tarea asignada (`pending` → `in_progress` → `completed`).
 
 #### 7.2 Pruebas de Listado y Procedencia (`tests/unit/test_task_service.py`)
-6. **`test_assigned_task_appears_in_assignee_tasks_list`**:
+9. **`test_assigned_task_appears_in_assignee_tasks_list`**:
    - La tarea asignada a Usuario 2 por Usuario 1 aparece en `get_user_tasks(usuario_2.id, scope='all')`.
-7. **`test_scope_filter_created_and_assigned`**:
-   - Con `scope='created'`, Usuario 2 solo ve tareas que él creó.
-   - Con `scope='assigned'`, Usuario 2 solo ve tareas asignadas por otros.
-8. **`test_soft_deleted_assigned_task_excluded_from_assignee_list`**:
-   - Si el creador elimina lógicamente una tarea asignada, esta desaparece del listado de Usuario 2.
+10. **`test_creator_continues_to_see_assigned_task`**:
+    - El creador (Usuario 1) continúa viendo la tarea asignada en su listado `get_user_tasks(usuario_1.id, scope='created')` y `scope='all'`.
+11. **`test_scope_filter_created_and_assigned`**:
+    - Con `scope='created'`, Usuario 2 solo ve tareas que él creó.
+    - Con `scope='assigned'`, Usuario 2 solo ve tareas asignadas por otros.
+12. **`test_soft_deleted_assigned_task_excluded_from_assignee_list`**:
+    - Si el creador elimina lógicamente una tarea asignada, esta desaparece del listado de Usuario 2.
 
 #### 7.3 Pruebas de Notificaciones y Lectura (`tests/unit/test_notification_service.py`)
-9. **`test_mark_notification_as_read_persists_in_history`**:
-   - Marcar como leída fija `is_read=True` y `read_at != None`, pero la fila permanece en la base de datos (conteo total inalterado).
-10. **`test_mark_all_notifications_as_read`**:
+13. **`test_mark_notification_as_read_persists_in_history`**:
+    - Marcar como leída fija `is_read=True` y `read_at != None`, pero la fila permanece en la base de datos (conteo total inalterado).
+14. **`test_mark_all_notifications_as_read`**:
     - Actualiza simultáneamente todas las notificaciones pendientes del usuario a leídas.
-11. **`test_cannot_read_another_users_notification`**:
+15. **`test_cannot_read_another_users_notification`**:
     - Intentar marcar como leída la notificación de otro usuario es rechazado con error de acceso o 404.
+16. **`test_notifications_persist_when_task_is_soft_deleted`**:
+    - Eliminar lógicamente una tarea no elimina sus notificaciones históricas asociadas en la tabla `notifications`.
 
 ---
 

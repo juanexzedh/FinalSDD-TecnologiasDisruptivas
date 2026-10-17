@@ -18,7 +18,7 @@ En estricto cumplimiento del Principio VII, **todas las peticiones mutantes con 
 ## 1. Asignación y Reasignación de Tareas (`HU-10`)
 
 ### 1.1 `POST /tasks/<int:task_id>/assign`
-- **Descripción**: Asigna una tarea a otro usuario registrado por su correo electrónico, la reasigna a otro usuario, o la desvincula (`assignee_email = ""` o `null`). Si la asignación es hacia un usuario distinto al actor, crea atómicamente una notificación interna en la misma transacción y registra el evento `TASK_ASSIGNED`.
+- **Descripción**: Asigna una tarea a otro usuario registrado mediante su correo electrónico exacto, la reasigna a otro usuario, o remueve la asignación (`assignee_email = ""` o `null`). Si la asignación es hacia un usuario distinto al actor, crea atómicamente una notificación interna para el nuevo asignatario. En reasignación o desasignación, emite adicionalmente una notificación de desasignación al usuario previo, registrando el evento correspondiente en `audit_logs` (`TASK_ASSIGNED` o `TASK_UNASSIGNED`).
 - **Autenticación requerida**: **SÍ** (`@login_required`).
 - **Protección CSRF**: Requerida.
 - **Payload de Entrada** (`application/x-www-form-urlencoded` o `application/json`):
@@ -28,13 +28,14 @@ En estricto cumplimiento del Principio VII, **todas las peticiones mutantes con 
     "csrf_token": "IjE2...<token_csrf_valido>"
   }
   ```
+  *(En el formulario HTML se presenta un campo de texto simple `<input type="email" name="assignee_email">` sin autocompletado ni selectores para evitar la enumeración o fuga de correos de usuarios registrados conforme al Principio VII).*
 - **Validaciones en Backend (Principio VII)**:
   - `csrf_token`: Obligatorio y válido contra la sesión activa.
   - La tarea debe existir y estar activa (`is_deleted == False`).
-  - El usuario en sesión DEBE ser el creador original de la tarea (`task.user_id == current_user.id`) o el asignatario actual.
+  - **Autorización (`FR-018`)**: El usuario en sesión DEBE ser exclusivamente el creador original de la tarea (`task.user_id == current_user.id`). Los asignatarios no tienen permitido reasignar ni desasignar tareas (HTTP `403 Forbidden`).
   - **Existencia del usuario destinatario**: Si `assignee_email` no está vacío, se busca en la tabla `users` tras aplicar `.strip().lower()`. Si no existe, se rechaza de inmediato con `400 Bad Request` (`USER_NOT_FOUND`). Queda terminantemente prohibido asignar a correos no registrados.
 - **Respuestas**:
-  - `302 Found` (Navegador): Redirección a `/tasks` con mensaje flash `"Tarea asignada exitosamente a colaborador@empresa.com."`.
+  - `302 Found` (Navegador): Redirección a `/tasks` con mensaje flash `"Tarea asignada exitosamente a colaborador@empresa.com."` (o `"Asignación de la tarea removida exitosamente."`).
   - `200 OK` (API/JSON):
     ```json
     {
@@ -44,7 +45,10 @@ En estricto cumplimiento del Principio VII, **todas las peticiones mutantes con 
         "task_id": 15,
         "assignee_id": 4,
         "assignee_email": "colaborador@empresa.com",
-        "notification_created": true
+        "notifications_generated": {
+          "new_assignee_notified": true,
+          "previous_assignee_notified": false
+        }
       }
     }
     ```
@@ -56,8 +60,8 @@ En estricto cumplimiento del Principio VII, **todas las peticiones mutantes con 
       "message": "El correo especificado no pertenece a ningún usuario registrado en el sistema."
     }
     ```
-  - `403 Forbidden`: Si el usuario actual no tiene permisos para asignar la tarea.
-  - `404 Not Found`: Si la tarea no existe.
+  - `403 Forbidden`: Si el usuario actual no es el creador de la tarea.
+  - `404 Not Found`: Si la tarea no existe o está eliminada.
 
 ---
 
@@ -113,3 +117,20 @@ En estricto cumplimiento del Principio VII, **todas las peticiones mutantes con 
       }
     }
     ```
+
+---
+
+## 3. Matriz de Autorización de Endpoints para Tareas Delegadas (`FR-018`)
+
+Conforme a la clarificación de requerimientos, la autorización sobre tareas delegadas se rige por la siguiente política estricta en la capa de servicios:
+
+| Endpoint | Método | Autorizado para Creador (`user_id == current_user.id`) | Autorizado para Asignatario (`assignee_id == current_user.id`) | Código de Error ante no autorizados |
+|---|---|---|---|---|
+| `/tasks` | `GET` | **SÍ** (ve sus creadas) | **SÍ** (ve sus asignadas) | N/A (filtrado por scope) |
+| `/tasks/<id>/status` | `POST` | **SÍ** | **SÍ** | `403 Forbidden` (`TaskAccessDeniedError`) |
+| `/tasks/<id>/edit` | `POST` | **SÍ** | **NO** | `403 Forbidden` (`TaskAccessDeniedError`) |
+| `/tasks/<id>/priority`| `POST` | **SÍ** | **NO** | `403 Forbidden` (`TaskAccessDeniedError`) |
+| `/tasks/<id>/category`| `POST` | **SÍ** | **NO** | `403 Forbidden` (`TaskAccessDeniedError`) |
+| `/tasks/<id>/assign`  | `POST` | **SÍ** | **NO** | `403 Forbidden` (`TaskAccessDeniedError`) |
+| `/tasks/<id>/delete`  | `POST` | **SÍ** | **NO** | `403 Forbidden` (`TaskAccessDeniedError`) |
+

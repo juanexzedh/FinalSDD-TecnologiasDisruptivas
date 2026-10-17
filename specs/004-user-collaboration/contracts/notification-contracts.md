@@ -22,6 +22,11 @@ En cumplimiento del Principio VII, **todas las peticiones mutantes con método P
 - **Autenticación requerida**: **SÍ** (`@login_required`).
 - **Parámetros de Consulta**:
   - `status` (opcional, string): `'all'` (defecto), `'unread'`, `'read'`.
+- **Tipos de Notificaciones Soportadas**:
+  - **Asignación**: `title: "Nueva tarea asignada"`, mensaje: `"El usuario <creador> te ha asignado la tarea '<título>'."`
+  - **Desasignación/Reasignación**: `title: "Asignación de tarea retirada"`, mensaje: `"El usuario <creador> ha retirado tu asignación de la tarea '<título>'."` o `"El usuario <creador> ha reasignado la tarea '<título>' a otro colaborador."`
+- **Comportamiento con Tareas Eliminadas**:
+  - Si la tarea fue eliminada lógicamente (`is_deleted=True`) o `task_id` es `null`, la notificación permanece intacta en el historial. La interfaz exhibe un indicador `"Tarea no disponible"`; cualquier intento de navegar a la tarea redirige con flash `"La tarea referenciada ha sido eliminada y ya no se encuentra disponible."`
 - **Respuestas**:
   - `200 OK` (Navegador): Renderiza la plantilla `notifications/index.html` con la lista de notificaciones, enlaces a las tareas y botones de acción.
   - `200 OK` (API/JSON):
@@ -37,15 +42,17 @@ En cumplimiento del Principio VII, **todas las peticiones mutantes con método P
             "message": "El usuario lider@empresa.com te ha asignado la tarea 'Auditoría de seguridad del monolito'.",
             "is_read": false,
             "read_at": null,
+            "task_available": true,
             "created_at": "2026-10-08T09:00:00Z"
           },
           {
             "id": 88,
             "task_id": 12,
-            "title": "Nueva tarea asignada",
-            "message": "El usuario colega@empresa.com te ha asignado la tarea 'Revisión de documentación'.",
+            "title": "Asignación de tarea retirada",
+            "message": "El usuario lider@empresa.com ha retirado tu asignación de la tarea 'Revisión de documentación'.",
             "is_read": true,
             "read_at": "2026-10-07T14:20:00Z",
+            "task_available": false,
             "created_at": "2026-10-07T14:00:00Z"
           }
         ],

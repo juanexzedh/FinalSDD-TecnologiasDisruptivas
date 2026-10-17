@@ -10,6 +10,17 @@
 
 ---
 
+## Clarifications
+
+### Session 2026-10-15
+- Q: ¿Qué permisos y operaciones específicas tiene permitido ejecutar el usuario asignatario sobre una tarea delegada, considerando que actualmente los servicios del sistema validan únicamente al creador? → A: Solo ver y cambiar de estado ('pending', 'in_progress', 'completed'); la edición de contenido (título, descripción, fecha límite), cambio de prioridad, asignación de categoría, reasignación y eliminación lógica quedan reservadas exclusivamente al creador original de la tarea.
+- Q: ¿Continúa el usuario creador visualizando la tarea en su listado tras asignarla a un tercero, y conserva la facultad de reasignarla o remover la asignación en cualquier momento? → A: Visibilidad permanente y control total: el creador continúa viendo la tarea en su listado en todo momento (con una insignia que indica a quién está asignada) y conserva la facultad plena de reasignarla a otro usuario o desasignarla (`assignee = null`) en cualquier momento.
+- Q: Al reasignar una tarea a un nuevo usuario o remover la asignación por completo, ¿a qué destinatarios se les debe generar una notificación interna en la aplicación? → A: Notificar a ambas partes: el nuevo asignatario recibe notificación de asignación ("Te han asignado la tarea X") y el usuario anterior recibe notificación de desasignación ("Se ha retirado tu asignación de la tarea X" o "La tarea X fue reasignada"); al desasignar por completo, el usuario previo recibe notificación de desasignación.
+- Q: ¿Cómo debe realizarse la selección del usuario destinatario en el formulario de asignación para evitar la enumeración o fuga de correos de usuarios registrados en el sistema? → A: Ingreso de correo exacto sin autocompletar: campo de texto libre donde se debe ingresar el correo electrónico exacto del usuario destinatario; no se proveen sugerencias, menús desplegables ni autocompletado para evitar revelar o enumerar cuentas registradas en el sistema (Principio VII: Seguridad por defecto).
+- Q: ¿Qué debe suceder con las notificaciones internas asociadas a una tarea cuando su creador la elimina lógicamente del sistema? → A: Conservar en bandeja como historial (tarea no disponible): las notificaciones asociadas permanecen en la bandeja del receptor para fines informativos y de trazabilidad histórica; si el usuario intenta acceder a la tarea referenciada, el sistema informa con un mensaje descriptivo que la tarea fue eliminada y ya no se encuentra disponible.
+
+---
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Delegación y Asignación de Tareas entre Usuarios Registrados (Priority: P1)
@@ -64,13 +75,14 @@ Como usuario asignatario, quiero recibir una notificación dentro de la aplicaci
 4. **Given** un usuario en la vista de notificaciones (`/notifications`), **When** hace clic en "Marcar como leída" en una notificación o hace clic en el enlace para ir a la tarea referenciada, **Then** la notificación pasa al estado leído (`is_read = true`, con `read_at`), el contador del menú decrece, y **la notificación permanece en el historial** (persiste, no se destruye automáticamente).
 5. **Given** un usuario con múltiples notificaciones no leídas, **When** ejecuta la acción "Marcar todas como leídas", **Then** todas sus notificaciones activas se actualizan a leídas de manera simultánea.
 6. **Given** un usuario revisando su historial de notificaciones, **When** decide voluntariamente eliminar una notificación leída mediante la acción "Eliminar notificación", **Then** el sistema remueve dicha notificación de su historial de forma segura.
+7. **Given** una tarea previamente asignada a "Usuario B", **When** su creador la reasigna a "Usuario C" o remueve su asignación dejándola sin asignar (`assignee = null`), **Then** "Usuario B" recibe una notificación interna informándole que se ha retirado la asignación de dicha tarea (y "Usuario C" recibe la notificación de asignación correspondiente si aplica).
 
 ---
 
 ### Edge Cases
 
 - **Asignación al propio usuario creador**: Un usuario puede asignarse una tarea a sí mismo (e.g., auto-asignación tras crearla desasignada). En este escenario la asignación se persiste normalmente y se audita, pero no se emite ninguna notificación interna al mismo actor.
-- **Reasignación sucesiva de una tarea**: Si una tarea asignada a Usuario B es reasignada posteriormente a Usuario C, Usuario C recibe una nueva notificación interna de asignación informándole que Usuario A le ha delegado la tarea. La notificación previa de Usuario B en su bandeja histórica permanece inalterada como constancia de la asignación anterior.
+- **Reasignación sucesiva y desasignación de una tarea**: Si una tarea asignada a Usuario B es reasignada posteriormente a Usuario C, se notifica a ambas partes: Usuario C recibe una notificación interna de asignación informándole que se le ha delegado la tarea, y Usuario B recibe una notificación interna informándole que la tarea ha sido reasignada/retirada de su asignación. De igual modo, al desasignar completamente una tarea (`assignee = null`), el usuario previamente asignado recibe una notificación interna informándole la revocación de la asignación.
 - **Intento de asignar ingresando correos con espacios o mayúsculas**: El sistema aplica normalización (`strip` y conversión a minúsculas) antes de contrastar contra la base de datos de usuarios registrados.
 - **Eliminación lógica de una tarea asignada**: Si el creador elimina lógicamente una tarea que estaba asignada a otro usuario, la tarea deja de mostrarse en el listado del asignatario. La notificación histórica asociada permanece accesible en la bandeja del asignatario, pero al intentar acceder a la tarea se le informa que el recurso ya no se encuentra disponible.
 - **Usuario asignado que es eliminado de la plataforma**: Si una cuenta de usuario es eliminada, cualquier tarea que tuviera asignada pasa de forma segura a estado no asignada (`assignee = null`), garantizando que la tarea y su creador original no sufran pérdida de datos ni inconsistencias referenciales.
@@ -82,16 +94,16 @@ Como usuario asignatario, quiero recibir una notificación dentro de la aplicaci
 
 ### Functional Requirements
 
-- **FR-001**: El sistema DEBE permitir a los usuarios asignar una tarea a un usuario registrado en la plataforma mediante su dirección de correo electrónico o su identificador (HU-10).
+- **FR-001**: El sistema DEBE permitir a los usuarios asignar una tarea a otro usuario registrado mediante el ingreso de su dirección de correo electrónico exacta en un campo de texto libre sin autocompletado ni menús desplegables de usuarios existentes, previniendo la fuga de privacidad y la enumeración de cuentas (Principio VII: Seguridad por defecto, HU-10).
 - **FR-002**: Toda asignación de tarea DEBE validarse rigurosamente en la capa de servicios del backend, rechazando categóricamente cualquier intento de asignación hacia una dirección de correo que no exista previamente en el sistema (Principio VII).
-- **FR-003**: El sistema DEBE permitir que una tarea esté sin asignar (`assignee = null`) o asignada a exactamente un usuario registrado a la vez.
+- **FR-003**: El sistema DEBE permitir que una tarea esté sin asignar (`assignee = null`) o asignada a exactamente un usuario registrado a la vez. El creador original conserva en todo momento la facultad de reasignar la tarea a otro usuario o desasignarla (`assignee = null`).
 - **FR-004**: Toda mutación en la asignación de una tarea (asignación inicial, cambio de asignatario o remoción de asignación) DEBE registrarse de forma inmutable en el registro de auditoría (`audit_logs`) con marca temporal en UTC, actor responsable, identificador de la tarea y metadatos con el asignatario anterior y nuevo (Principio VIII).
-- **FR-005**: El listado de tareas del usuario (`/tasks`) DEBE incluir tanto las tareas donde el usuario es el creador original (`creator_id`) como aquellas donde figura como asignatario activo (`assignee_id`), excluyendo las tareas eliminadas lógicamente.
-- **FR-006**: El listado de tareas DEBE diferenciar visualmente las tareas creadas por el usuario de las tareas asignadas por terceros mediante una insignia ("badge") informativa en cada tarjeta/fila de tarea.
+- **FR-005**: El listado de tareas del usuario (`/tasks`) DEBE incluir tanto las tareas donde el usuario es el creador original (`creator_id`) —incluso si están asignadas a otro miembro— como aquellas donde figura como asignatario activo (`assignee_id`), excluyendo las tareas eliminadas lógicamente.
+- **FR-006**: El listado de tareas DEBE diferenciar visualmente la procedencia y asignación de cada tarea mediante insignias ("badges"): en la vista del creador, indica si la tarea está sin asignar o muestra `Asignada a [correo del asignatario]`; en la vista del asignatario, muestra `Asignada por [correo del creador]`.
 - **FR-007**: El listado de tareas DEBE ofrecer un filtro de procedencia (`scope`) con las opciones: `'all'` (todas: creadas y asignadas, valor por defecto), `'created'` (solo tareas creadas por el usuario) y `'assigned'` (solo tareas asignadas al usuario por terceros).
 - **FR-008**: Los filtros de procedencia DEBEN combinarse ortogonalmente con los filtros por estado (`status`), filtros por categoría (`category_id`) y ordenamiento por prioridad (`sort_by`) definidos en los Incrementos 1 a 3.
-- **FR-009**: Cuando una tarea es asignada o reasignada a un usuario distinto del actor que realiza la acción, el sistema DEBE generar de forma inmediata una notificación interna en la aplicación para el usuario asignatario (HU-11).
-- **FR-010**: Las notificaciones internas DEBEN persistir en la base de datos relacional y asociarse unívocamente al usuario receptor, conteniendo mensaje, enlace a la tarea, fecha de creación y estado de lectura (`is_read`).
+- **FR-009**: Cuando una tarea es asignada, reasignada o desasignada entre usuarios distintos del actor que realiza la acción, el sistema DEBE generar notificaciones internas inmediatas (HU-11): en asignación inicial o reasignación, el nuevo asignatario recibe una notificación de asignación ("Te han asignado la tarea X"); en reasignación o remoción de asignación (`assignee = null`), el asignatario anterior recibe una notificación de desasignación informándole la revocación de la responsabilidad sobre la tarea.
+- **FR-010**: Las notificaciones internas DEBEN persistir en la base de datos relacional y asociarse unívocamente al usuario receptor, conteniendo mensaje, enlace a la tarea, fecha de creación y estado de lectura (`is_read`). La eliminación lógica de una tarea NO debe eliminar sus notificaciones históricas asociadas; al intentar acceder a una tarea eliminada desde su notificación, el sistema DEBE informar al usuario de manera clara que la tarea fue eliminada y ya no se encuentra disponible.
 - **FR-011**: La interfaz de usuario DEBE exhibir en la barra de navegación un contador numérico con la cantidad de notificaciones no leídas (`is_read = false`) del usuario en sesión.
 - **FR-012**: El sistema DEBE proporcionar una vista dedicada de notificaciones (`/notifications`) donde el usuario pueda consultar su historial de notificaciones ordenado cronológicamente (más recientes primero).
 - **FR-013**: Las notificaciones consultadas DEBEN poder marcarse como leídas de forma individual (`POST /notifications/<id>/read`) o de forma colectiva (`POST /notifications/read-all`).
@@ -99,6 +111,7 @@ Como usuario asignatario, quiero recibir una notificación dentro de la aplicaci
 - **FR-015**: El sistema DEBE permitir al usuario eliminar voluntariamente notificaciones de su bandeja (`POST /notifications/<id>/delete`).
 - **FR-016**: La arquitectura de colaboración y notificaciones DEBE implementarse dentro del monolito estricto (Principio I), sin recurrir a servicios externos de correo, servidores WebSocket ni agentes de mensajería asíncrona.
 - **FR-017**: **Límites de alcance explícitos**: Quedan expresamente fuera de este incremento: actualización dinámica sin recarga de página (HU-15) y reordenamiento manual mediante drag-and-drop (HU-16).
+- **FR-018**: **Matriz de permisos de colaboración**: El usuario asignatario tiene permisos exclusivamente para visualizar la tarea y cambiar su estado (`pending`, `in_progress`, `completed`). Las operaciones de edición de contenido (título, descripción, fecha límite), cambio de prioridad, asignación de categoría, reasignación, desasignación y eliminación lógica quedan reservadas de forma estricta y exclusiva al creador original de la tarea.
 
 ---
 
@@ -113,7 +126,7 @@ Como usuario asignatario, quiero recibir una notificación dentro de la aplicaci
   - Atributos:
     - `id`: Identificador único (entero autoincremental).
     - `user_id`: Identificador del usuario destinatario (clave foránea a `users.id` con `ON DELETE CASCADE`).
-    - `task_id`: Identificador de la tarea referenciada (clave foránea a `tasks.id` con `ON DELETE CASCADE` o `SET NULL`).
+    - `task_id`: Identificador de la tarea referenciada (clave foránea opcional a `tasks.id` con `ON DELETE SET NULL`, preservando la notificación histórica incluso si la tarea es eliminada físicamente o lógicamente).
     - `title`: Título o resumen descriptivo de la notificación.
     - `message`: Contenido explicativo detallando quién asignó la tarea y el nombre de la misma.
     - `is_read`: Booleano que indica si la notificación ha sido leída (por defecto `False`).
@@ -144,7 +157,7 @@ Como usuario asignatario, quiero recibir una notificación dentro de la aplicaci
 - Cada tarea tiene exactamente un creador (`user_id` / creador original) y puede tener a lo sumo un asignatario (`assignee_id`), o ninguno. No se admite asignación compartida a múltiples usuarios sobre la misma tarea en este incremento.
 - El usuario creador conserva siempre los privilegios de administración, edición, cambio de estado, eliminación lógica y reasignación de su tarea.
 - El usuario asignado tiene permisos para visualizar la tarea, cambiar su estado (`pending`, `in_progress`, `completed`), y reabrirla si fue completada por él.
-- El selector de asignación en la interfaz web permite ingresar el correo del usuario destinatario o seleccionarlo de un listado de usuarios del sistema si el contexto lo permite, pero la validación canónica de existencia siempre se ejecuta en el backend contra la tabla `users`.
+- El formulario de asignación en la interfaz web consiste en un campo de texto libre donde se debe ingresar el correo electrónico exacto del destinatario, sin listas desplegables ni autocompletado para evitar la enumeración o fuga de cuentas. La validación canónica de existencia se ejecuta de forma estricta en el backend contra la tabla `users` (Principio VII).
 - La auto-asignación (un usuario asignándose una tarea propia) es una operación válida de flujo de trabajo, pero se omite la generación de notificaciones internas para evitar alertas innecesarias sobre acciones propias.
 - Las notificaciones internas no sustituyen a ningún servicio externo; residen íntegramente en la base de datos relacional de la aplicación monolítica.
 - Todas las peticiones mutantes sobre notificaciones y asignaciones utilizan el método POST protegido con tokens sincronizadores CSRF conforme a la constitución.
