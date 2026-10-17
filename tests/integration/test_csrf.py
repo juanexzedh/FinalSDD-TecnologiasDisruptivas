@@ -39,3 +39,20 @@ def test_post_with_valid_token_passes_csrf(csrf_client):
         headers={"X-CSRFToken": token},
     )
     assert r.status_code == 201
+
+
+@pytest.mark.parametrize(
+    "path,payload",
+    [
+        ("/tasks/1/priority", {"priority": "high"}),
+        ("/categories", {"name": "Nueva"}),
+        ("/categories/1/edit", {"name": "Editada"}),
+        ("/categories/1/delete", {}),
+        ("/tasks/1/category", {"category_id": 1}),
+    ],
+)
+def test_new_post_endpoints_enforce_csrf(csrf_client, path, payload):
+    r = csrf_client.post(path, json=payload)
+    assert r.status_code == 400
+    assert r.get_json()["code"] == "CSRF_ERROR"
+

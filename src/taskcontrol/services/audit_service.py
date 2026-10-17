@@ -39,3 +39,8 @@ def record_event(actor_id, action, entity_type, entity_id, details=None):
 
 def record_task_event(actor_id, action, task_id, details=None):
     return record_event(actor_id, action, "Task", task_id, details)
+
+
+def record_category_event(actor_id, action, category_id, details=None):
+    return record_event(actor_id, action, "Category", category_id, details)
+

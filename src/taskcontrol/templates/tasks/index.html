@@ -1,12 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Mis tareas</h1>
-<nav class="filters">
-  {% for key, label in [('all','Todas'),('pending','Pendientes'),('in_progress','En progreso'),('completed','Completadas')] %}
-    <a href="{{ url_for('tasks.list_tasks', status=key) }}" class="{{ 'active' if current_filter == key else '' }}">{{ label }}</a>
-  {% endfor %}
-  <a class="btn" href="{{ url_for('tasks.new_task_form') }}">+ Nueva tarea</a>
-</nav>
+
+<div class="filter-bar">
+  <nav class="filters">
+    {% for key, label in [('all','Todas'),('pending','Pendientes'),('in_progress','En progreso'),('completed','Completadas')] %}
+      <a href="{{ url_for('tasks.list_tasks', status=key, category=current_category, sort=current_sort) }}" class="{{ 'active' if current_filter == key else '' }}">{{ label }}</a>
+    {% endfor %}
+  </nav>
+
+  <form method="get" action="{{ url_for('tasks.list_tasks') }}" class="inline-form filters-form">
+    <input type="hidden" name="status" value="{{ current_filter }}">
+    <label for="filter-category" style="margin:0;display:inline;">Categoría:
+      <select id="filter-category" name="category" onchange="this.form.submit()">
+        <option value="all" {% if current_category == 'all' %}selected{% endif %}>Todas</option>
+        <option value="uncategorized" {% if current_category == 'uncategorized' or current_category == 'none' %}selected{% endif %}>Sin categoría</option>
+        {% if categories %}
+          {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if current_category|string == cat.id|string %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        {% endif %}
+      </select>
+    </label>
+
+    <label for="filter-sort" style="margin:0;display:inline;">Ordenar:
+      <select id="filter-sort" name="sort" onchange="this.form.submit()">
+        <option value="created_at" {% if current_sort == 'created_at' or current_sort == 'created_desc' %}selected{% endif %}>Fecha creación</option>
+        <option value="priority" {% if current_sort == 'priority' %}selected{% endif %}>Prioridad (Urgencia)</option>
+      </select>
+    </label>
+    <noscript><button type="submit">Filtrar</button></noscript>
+  </form>
+
+  <a class="btn" href="{{ url_for('tasks.new_task_form') }}" style="margin-left:auto;">+ Nueva tarea</a>
+</div>
+
 {% if not tasks %}<p class="empty">No hay tareas.</p>{% endif %}
 <ul class="tasks">
 {% for t in tasks %}
@@ -14,7 +42,22 @@
     <div class="title">{{ t.title }}</div>
     <div class="meta">
       <span class="badge {{ t.status }}">{{ labels[t.status] }}</span>
-      {% if t.due_date %}<span>Vence: {{ t.due_date.isoformat() }}</span>{% endif %}
+      {% if t.priority == 'high' %}
+        <span class="badge badge-priority-high">Alta</span>
+      {% elif t.priority == 'low' %}
+        <span class="badge badge-priority-low">Baja</span>
+      {% else %}
+        <span class="badge badge-priority-medium">Media</span>
+      {% endif %}
+      {% if t.category %}
+        <span class="badge badge-category">{{ t.category.name }}</span>
+      {% endif %}
+      {% if t.due_date %}
+        <span>Vence: {{ t.due_date.isoformat() }}</span>
+      {% endif %}
+      {% if t.is_overdue %}
+        <span class="badge badge-overdue">Vencida</span>
+      {% endif %}
     </div>
     {% if t.description %}<p class="desc">{{ t.description }}</p>{% endif %}
     <div class="actions">
@@ -33,6 +76,20 @@
         </form>
         {% endfor %}
       {% endif %}
+
+      <!-- Cambio rápido de prioridad -->
+      {% if not t.is_deleted and t.status != 'completed' %}
+      <form method="post" action="{{ url_for('tasks.set_priority', task_id=t.id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <select name="priority" onchange="this.form.submit()" class="input-sm">
+          <option value="high" {% if t.priority == 'high' %}selected{% endif %}>Alta</option>
+          <option value="medium" {% if t.priority == 'medium' %}selected{% endif %}>Media</option>
+          <option value="low" {% if t.priority == 'low' %}selected{% endif %}>Baja</option>
+        </select>
+        <noscript><button type="submit" class="btn-sm">Cambiar</button></noscript>
+      </form>
+      {% endif %}
+
       <a href="{{ url_for('tasks.edit_task_form', task_id=t.id) }}">Editar</a>
       <form method="post" action="{{ url_for('tasks.delete_task', task_id=t.id) }}" onsubmit="return confirm('¿Eliminar esta tarea? Esta acción no se puede deshacer.');">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

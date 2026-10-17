@@ -29,16 +29,19 @@ def create_app(config_name=None):
 
     from . import models  # noqa: F401  (registra tablas para Alembic)
     from .blueprints.auth import auth_bp
+    from .blueprints.categories import categories_bp
     from .blueprints.errors import register_error_handlers
     from .blueprints.recovery import recovery_bp
-    from .services.email_sender import ConsoleEmailSender
     from .blueprints.tasks import tasks_bp
+    from .services.email_sender import ConsoleEmailSender
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(tasks_bp)
+    app.register_blueprint(categories_bp)
     app.register_blueprint(recovery_bp)
     app.extensions["email_sender"] = ConsoleEmailSender()
     register_error_handlers(app)
+
 
     for name in ("taskcontrol.audit", "taskcontrol.email"):
         lg = logging.getLogger(name)

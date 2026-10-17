@@ -11,6 +11,10 @@
   <header>
     <a class="brand" href="{{ url_for('tasks.list_tasks') }}">TaskControl</a>
     {% if session.get('user_id') %}
+    <nav class="nav-links">
+      <a href="{{ url_for('tasks.list_tasks') }}">Tareas</a>
+      <a href="{{ url_for('categories.list_categories') }}">Categorías</a>
+    </nav>
     <form method="post" action="{{ url_for('auth.logout') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="link" type="submit">Cerrar sesión</button>

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="categories-container">
+  <h1>Gestión de Categorías</h1>
+
+  <section class="card new-category-card">
+    <h2>Nueva Categoría</h2>
+    <form method="post" action="{{ url_for('categories.create_category') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="name">Nombre (1-50 caracteres):</label>
+        <input type="text" id="name" name="name" maxlength="50" required placeholder="Ej: Trabajo, Personal, Finanzas">
+      </div>
+      <button type="submit" class="btn btn-primary">Crear Categoría</button>
+    </form>
+  </section>
+
+  <section class="card category-list-card">
+    <h2>Mis Categorías</h2>
+    {% if not categories %}
+      <p class="empty">No tienes categorías creadas.</p>
+    {% else %}
+      <ul class="category-list">
+        {% for cat in categories %}
+          <li class="category-item">
+            <div class="category-info">
+              <strong>{{ cat.name }}</strong>
+              <span class="badge badge-count">{{ cat.task_count if cat.task_count is defined else 0 }} tareas activas</span>
+            </div>
+            <div class="category-actions">
+              <!-- Formulario de renombrado -->
+              <form method="post" action="{{ url_for('categories.edit_category', category_id=cat.id) }}" class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="text" name="name" value="{{ cat.name }}" maxlength="50" required class="input-sm">
+                <button type="submit" class="btn btn-sm">Renombrar</button>
+              </form>
+              <!-- Formulario de eliminación segura -->
+              <form method="post" action="{{ url_for('categories.delete_category', category_id=cat.id) }}" class="inline-form" onsubmit="return confirm('¿Eliminar esta categoría? Sus tareas no serán borradas, quedarán sin categoría.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

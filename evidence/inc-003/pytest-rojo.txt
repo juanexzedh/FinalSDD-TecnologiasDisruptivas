@@ -1,0 +1,968 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0 -- G:\INFO 03-02-2021\DOCUMENTOS\Jehg\jehg\UNIVERSIDAD\Disruptivas\SDD-Tecnologias-Disruptivas-main\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: G:\INFO 03-02-2021\DOCUMENTOS\Jehg\jehg\UNIVERSIDAD\Disruptivas\SDD-Tecnologias-Disruptivas-main
+configfile: pytest.ini
+testpaths: tests
+plugins: cov-7.1.0
+collecting ... collected 151 items
+
+tests/integration/test_auth_routes.py::test_register_login_logout_flow PASSED [  0%]
+tests/integration/test_auth_routes.py::test_register_errors PASSED       [  1%]
+tests/integration/test_auth_routes.py::test_login_wrong_credentials_is_401_and_generic PASSED [  1%]
+tests/integration/test_auth_routes.py::test_html_pages_render PASSED     [  2%]
+tests/integration/test_auth_routes.py::test_html_unauthenticated_redirects_to_login PASSED [  3%]
+tests/integration/test_category_routes.py::test_category_endpoints_require_session[get-/categories] FAILED [  3%]
+tests/integration/test_category_routes.py::test_category_endpoints_require_session[post-/categories] FAILED [  4%]
+tests/integration/test_category_routes.py::test_category_endpoints_require_session[post-/categories/1/edit] FAILED [  5%]
+tests/integration/test_category_routes.py::test_category_endpoints_require_session[post-/categories/1/delete] FAILED [  5%]
+tests/integration/test_category_routes.py::test_crud_category_json FAILED [  6%]
+tests/integration/test_category_routes.py::test_category_html_flow FAILED [  7%]
+tests/integration/test_category_routes.py::test_delete_category_unlinks_tasks_in_routes FAILED [  7%]
+tests/integration/test_category_routes.py::test_other_user_category_isolation_routes FAILED [  8%]
+tests/integration/test_csrf.py::test_post_without_token_is_rejected PASSED [  9%]
+tests/integration/test_csrf.py::test_post_with_tampered_token_is_rejected PASSED [  9%]
+tests/integration/test_csrf.py::test_post_with_valid_token_passes_csrf PASSED [ 10%]
+tests/integration/test_csrf.py::test_new_post_endpoints_enforce_csrf[/tasks/1/priority-payload0] FAILED [ 11%]
+tests/integration/test_csrf.py::test_new_post_endpoints_enforce_csrf[/categories-payload1] FAILED [ 11%]
+tests/integration/test_csrf.py::test_new_post_endpoints_enforce_csrf[/categories/1/edit-payload2] FAILED [ 12%]
+tests/integration/test_csrf.py::test_new_post_endpoints_enforce_csrf[/categories/1/delete-payload3] FAILED [ 13%]
+tests/integration/test_csrf.py::test_new_post_endpoints_enforce_csrf[/tasks/1/category-payload4] FAILED [ 13%]
+tests/integration/test_lifecycle_routes.py::test_delete_json_and_listing PASSED [ 14%]
+tests/integration/test_lifecycle_routes.py::test_delete_twice_returns_400 PASSED [ 15%]
+tests/integration/test_lifecycle_routes.py::test_deleted_task_cannot_be_edited_or_changed PASSED [ 15%]
+tests/integration/test_lifecycle_routes.py::test_delete_html_redirects_to_list PASSED [ 16%]
+tests/integration/test_lifecycle_routes.py::test_reopen_json PASSED      [ 17%]
+tests/integration/test_lifecycle_routes.py::test_reopen_non_completed_returns_400 PASSED [ 17%]
+tests/integration/test_lifecycle_routes.py::test_new_endpoints_require_session[/tasks/1/delete] PASSED [ 18%]
+tests/integration/test_lifecycle_routes.py::test_new_endpoints_require_session[/tasks/1/reopen] PASSED [ 19%]
+tests/integration/test_lifecycle_routes.py::test_other_users_task_gives_404_on_new_endpoints PASSED [ 19%]
+tests/integration/test_lifecycle_routes.py::test_browser_unknown_task_redirects_with_flash PASSED [ 20%]
+tests/integration/test_lifecycle_routes.py::test_ui_completed_task_shows_reopen_and_no_status_buttons PASSED [ 21%]
+tests/integration/test_lifecycle_routes.py::test_csrf_enforced_on_new_posts[/tasks/1/delete] PASSED [ 21%]
+tests/integration/test_lifecycle_routes.py::test_csrf_enforced_on_new_posts[/tasks/1/reopen] PASSED [ 22%]
+tests/integration/test_recovery_routes.py::test_forgot_password_page_renders PASSED [ 23%]
+tests/integration/test_recovery_routes.py::test_blind_response_identical_for_registered_and_unregistered PASSED [ 23%]
+tests/integration/test_recovery_routes.py::test_blind_response_html_redirects_to_login PASSED [ 24%]
+tests/integration/test_recovery_routes.py::test_malformed_email_is_validation_error PASSED [ 25%]
+tests/integration/test_recovery_routes.py::test_full_reset_flow PASSED   [ 25%]
+tests/integration/test_recovery_routes.py::test_invalid_token_post_and_get PASSED [ 26%]
+tests/integration/test_recovery_routes.py::test_weak_password_rejected_by_route PASSED [ 27%]
+tests/integration/test_recovery_routes.py::test_reset_revokes_sessions_in_other_browsers PASSED [ 27%]
+tests/integration/test_recovery_routes.py::test_route_level_throttling_is_silent PASSED [ 28%]
+tests/integration/test_recovery_routes.py::test_forgot_password_redirects_when_already_logged_in PASSED [ 29%]
+tests/integration/test_recovery_routes.py::test_csrf_enforced_on_recovery_posts PASSED [ 29%]
+tests/integration/test_task_routes.py::test_task_endpoints_require_session_in_backend[post-/tasks] PASSED [ 30%]
+tests/integration/test_task_routes.py::test_task_endpoints_require_session_in_backend[post-/tasks/1/edit] PASSED [ 31%]
+tests/integration/test_task_routes.py::test_task_endpoints_require_session_in_backend[post-/tasks/1/status] PASSED [ 31%]
+tests/integration/test_task_routes.py::test_task_endpoints_require_session_in_backend[get-/tasks/new] PASSED [ 32%]
+tests/integration/test_task_routes.py::test_task_endpoints_require_session_in_backend[get-/tasks/1/edit] PASSED [ 33%]
+tests/integration/test_task_routes.py::test_create_list_filter PASSED    [ 33%]
+tests/integration/test_task_routes.py::test_create_validation_error_shape PASSED [ 34%]
+tests/integration/test_task_routes.py::test_invalid_transition_returns_400 PASSED [ 35%]
+tests/integration/test_task_routes.py::test_edit_task PASSED             [ 35%]
+tests/integration/test_task_routes.py::test_user_never_sees_or_touches_other_users_tasks PASSED [ 36%]
+tests/integration/test_task_routes.py::test_xss_is_escaped_on_render PASSED [ 37%]
+tests/integration/test_task_routes.py::test_html_form_flow PASSED        [ 37%]
+tests/integration/test_task_routes.py::test_priority_endpoints_require_session FAILED [ 38%]
+tests/integration/test_task_routes.py::test_set_task_priority_route_json FAILED [ 39%]
+tests/integration/test_task_routes.py::test_set_task_priority_route_html FAILED [ 39%]
+tests/integration/test_task_routes.py::test_set_task_priority_invalid_value FAILED [ 40%]
+tests/integration/test_task_routes.py::test_task_priority_sorting_routes FAILED [ 41%]
+tests/integration/test_task_routes.py::test_task_category_endpoints_require_session FAILED [ 41%]
+tests/integration/test_task_routes.py::test_assign_task_category_route FAILED [ 42%]
+tests/integration/test_task_routes.py::test_cannot_assign_other_user_category_route FAILED [ 43%]
+tests/integration/test_task_routes.py::test_filter_by_category_routes FAILED [ 43%]
+tests/integration/test_task_routes.py::test_task_overdue_in_routes FAILED [ 44%]
+tests/unit/test_auth_service.py::test_register_hashes_password_and_normalizes_email PASSED [ 45%]
+tests/unit/test_auth_service.py::test_register_rejects_invalid_email[] PASSED [ 45%]
+tests/unit/test_auth_service.py::test_register_rejects_invalid_email[sin-arroba] PASSED [ 46%]
+tests/unit/test_auth_service.py::test_register_rejects_invalid_email[a@b] PASSED [ 47%]
+tests/unit/test_auth_service.py::test_register_rejects_invalid_email[a b@c.com] PASSED [ 47%]
+tests/unit/test_auth_service.py::test_register_rejects_weak_password[] PASSED [ 48%]
+tests/unit/test_auth_service.py::test_register_rejects_weak_password[corta1] PASSED [ 49%]
+tests/unit/test_auth_service.py::test_register_rejects_weak_password[sololetras] PASSED [ 49%]
+tests/unit/test_auth_service.py::test_register_rejects_weak_password[12345678] PASSED [ 50%]
+tests/unit/test_auth_service.py::test_register_rejects_duplicate_email_case_insensitive PASSED [ 50%]
+tests/unit/test_auth_service.py::test_authenticate_ok_and_fail PASSED    [ 51%]
+tests/unit/test_category_service.py::test_create_category_success FAILED [ 52%]
+tests/unit/test_category_service.py::test_category_name_unique_per_user_case_insensitive FAILED [ 52%]
+tests/unit/test_category_service.py::test_cannot_create_more_than_50_categories_per_user FAILED [ 53%]
+tests/unit/test_category_service.py::test_get_user_categories_isolation FAILED [ 54%]
+tests/unit/test_category_service.py::test_rename_category_preserves_task_links_and_records_audit FAILED [ 54%]
+tests/unit/test_category_service.py::test_delete_category_unlinks_tasks_setting_category_id_to_null FAILED [ 55%]
+tests/unit/test_category_service.py::test_category_name_validation FAILED [ 56%]
+tests/unit/test_recovery_service.py::test_request_for_registered_email_stores_only_hash_and_sends_link PASSED [ 56%]
+tests/unit/test_recovery_service.py::test_request_for_unregistered_email_is_blind PASSED [ 57%]
+tests/unit/test_recovery_service.py::test_new_request_invalidates_previous_unused_token PASSED [ 58%]
+tests/unit/test_recovery_service.py::test_silent_throttling_max_3_per_15_minutes PASSED [ 58%]
+tests/unit/test_recovery_service.py::test_valid_token_changes_password_and_is_single_use PASSED [ 59%]
+tests/unit/test_recovery_service.py::test_expired_token_is_rejected PASSED [ 60%]
+tests/unit/test_recovery_service.py::test_garbage_token_is_rejected PASSED [ 60%]
+tests/unit/test_recovery_service.py::test_weak_or_mismatched_password_rejected_and_token_not_consumed PASSED [ 61%]
+tests/unit/test_recovery_service.py::test_reset_password_revokes_all_active_sessions PASSED [ 62%]
+tests/unit/test_recovery_service.py::test_reset_is_audited PASSED        [ 62%]
+tests/unit/test_task_lifecycle.py::test_delete_is_logical_and_audited PASSED [ 63%]
+tests/unit/test_task_lifecycle.py::test_deleted_task_never_listed[all] PASSED [ 64%]
+tests/unit/test_task_lifecycle.py::test_deleted_task_never_listed[pending] PASSED [ 64%]
+tests/unit/test_task_lifecycle.py::test_deleted_task_never_listed[in_progress] PASSED [ 65%]
+tests/unit/test_task_lifecycle.py::test_deleted_task_never_listed[completed] PASSED [ 66%]
+tests/unit/test_task_lifecycle.py::test_audit_history_preserved_after_delete PASSED [ 66%]
+tests/unit/test_task_lifecycle.py::test_cannot_delete_twice PASSED       [ 67%]
+tests/unit/test_task_lifecycle.py::test_cannot_edit_change_status_or_reopen_deleted_task PASSED [ 68%]
+tests/unit/test_task_lifecycle.py::test_deleted_task_is_hidden_from_get_task PASSED [ 68%]
+tests/unit/test_task_lifecycle.py::test_other_user_cannot_delete PASSED  [ 69%]
+tests/unit/test_task_lifecycle.py::test_soft_delete_is_permanent_for_user PASSED [ 70%]
+tests/unit/test_task_lifecycle.py::test_reopen_completed_goes_to_pending_with_distinct_event PASSED [ 70%]
+tests/unit/test_task_lifecycle.py::test_cannot_reopen_non_completed[pending] PASSED [ 71%]
+tests/unit/test_task_lifecycle.py::test_cannot_reopen_non_completed[in_progress] PASSED [ 72%]
+tests/unit/test_task_lifecycle.py::test_reopened_task_can_continue_workflow PASSED [ 72%]
+tests/unit/test_task_lifecycle.py::test_ordinary_status_change_still_cannot_leave_completed PASSED [ 73%]
+tests/unit/test_task_lifecycle.py::test_other_user_cannot_reopen PASSED  [ 74%]
+tests/unit/test_task_service.py::test_create_task_defaults_and_audit PASSED [ 74%]
+tests/unit/test_task_service.py::test_create_task_rejects_bad_title[] PASSED [ 75%]
+tests/unit/test_task_service.py::test_create_task_rejects_bad_title[   ] PASSED [ 76%]
+tests/unit/test_task_service.py::test_create_task_rejects_bad_title[None] PASSED [ 76%]
+tests/unit/test_task_service.py::test_create_task_rejects_bad_title[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx] PASSED [ 77%]
+tests/unit/test_task_service.py::test_create_task_rejects_long_description_and_bad_date PASSED [ 78%]
+tests/unit/test_task_service.py::test_description_stored_as_plain_text_not_escaped PASSED [ 78%]
+tests/unit/test_task_service.py::test_list_only_own_tasks_ordered_desc_and_filtered PASSED [ 79%]
+tests/unit/test_task_service.py::test_valid_transitions_are_audited[pending-in_progress] PASSED [ 80%]
+tests/unit/test_task_service.py::test_valid_transitions_are_audited[pending-completed] PASSED [ 80%]
+tests/unit/test_task_service.py::test_valid_transitions_are_audited[in_progress-pending] PASSED [ 81%]
+tests/unit/test_task_service.py::test_valid_transitions_are_audited[in_progress-completed] PASSED [ 82%]
+tests/unit/test_task_service.py::test_completed_is_locked[pending] PASSED [ 82%]
+tests/unit/test_task_service.py::test_completed_is_locked[in_progress] PASSED [ 83%]
+tests/unit/test_task_service.py::test_completed_is_locked[completed] PASSED [ 84%]
+tests/unit/test_task_service.py::test_same_state_and_unknown_state_rejected PASSED [ 84%]
+tests/unit/test_task_service.py::test_update_keeps_status_and_audits PASSED [ 85%]
+tests/unit/test_task_service.py::test_update_validates_like_create PASSED [ 86%]
+tests/unit/test_task_service.py::test_other_users_task_is_not_found PASSED [ 86%]
+tests/unit/test_task_service.py::test_audit_emits_structured_log PASSED  [ 87%]
+tests/unit/test_task_service.py::test_default_priority_is_medium_on_creation FAILED [ 88%]
+tests/unit/test_task_service.py::test_invalid_priority_raises_domain_error FAILED [ 88%]
+tests/unit/test_task_service.py::test_tasks_sorted_by_priority_descending FAILED [ 89%]
+tests/unit/test_task_service.py::test_tasks_priority_tiebreak_by_created_at_desc FAILED [ 90%]
+tests/unit/test_task_service.py::test_set_task_priority_success FAILED   [ 90%]
+tests/unit/test_task_service.py::test_cannot_set_priority_on_deleted_task FAILED [ 91%]
+tests/unit/test_task_service.py::test_cannot_set_priority_on_other_user_task FAILED [ 92%]
+tests/unit/test_task_service.py::test_assign_task_category_success FAILED [ 92%]
+tests/unit/test_task_service.py::test_cannot_assign_category_from_another_user FAILED [ 93%]
+tests/unit/test_task_service.py::test_cannot_assign_category_to_deleted_task FAILED [ 94%]
+tests/unit/test_task_service.py::test_filter_tasks_by_category_id FAILED [ 94%]
+tests/unit/test_task_service.py::test_filter_tasks_uncategorized FAILED  [ 95%]
+tests/unit/test_task_service.py::test_get_tasks_combines_status_category_id_and_sort_by FAILED [ 96%]
+tests/unit/test_task_service.py::test_filter_uncategorized_and_nonexistent_category_isolation FAILED [ 96%]
+tests/unit/test_task_service.py::test_completed_task_with_past_due_date_is_never_overdue FAILED [ 97%]
+tests/unit/test_task_service.py::test_soft_deleted_task_with_past_due_date_is_never_overdue FAILED [ 98%]
+tests/unit/test_task_service.py::test_pending_or_in_progress_task_with_past_due_date_is_overdue FAILED [ 98%]
+tests/unit/test_task_service.py::test_task_with_due_date_today_is_not_overdue_utc FAILED [ 99%]
+tests/unit/test_task_service.py::test_task_without_due_date_is_not_overdue FAILED [100%]
+
+================================== FAILURES ===================================
+__________ test_category_endpoints_require_session[get-/categories] ___________
+
+client = <FlaskClient <Flask 'taskcontrol'>>, method = 'get'
+path = '/categories'
+
+    @pytest.mark.parametrize(
+        "method,path",
+        [
+            ("get", "/categories"),
+            ("post", "/categories"),
+            ("post", "/categories/1/edit"),
+            ("post", "/categories/1/delete"),
+        ],
+    )
+    def test_category_endpoints_require_session(client, method, path):
+        r = (
+            getattr(client, method)(path, json={}, headers=JSON)
+            if method == "post"
+            else client.get(path, headers=JSON)
+        )
+>       assert r.status_code == 401
+E       assert 404 == 401
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_category_routes.py:21: AssertionError
+__________ test_category_endpoints_require_session[post-/categories] __________
+
+client = <FlaskClient <Flask 'taskcontrol'>>, method = 'post'
+path = '/categories'
+
+    @pytest.mark.parametrize(
+        "method,path",
+        [
+            ("get", "/categories"),
+            ("post", "/categories"),
+            ("post", "/categories/1/edit"),
+            ("post", "/categories/1/delete"),
+        ],
+    )
+    def test_category_endpoints_require_session(client, method, path):
+        r = (
+            getattr(client, method)(path, json={}, headers=JSON)
+            if method == "post"
+            else client.get(path, headers=JSON)
+        )
+>       assert r.status_code == 401
+E       assert 404 == 401
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_category_routes.py:21: AssertionError
+______ test_category_endpoints_require_session[post-/categories/1/edit] _______
+
+client = <FlaskClient <Flask 'taskcontrol'>>, method = 'post'
+path = '/categories/1/edit'
+
+    @pytest.mark.parametrize(
+        "method,path",
+        [
+            ("get", "/categories"),
+            ("post", "/categories"),
+            ("post", "/categories/1/edit"),
+            ("post", "/categories/1/delete"),
+        ],
+    )
+    def test_category_endpoints_require_session(client, method, path):
+        r = (
+            getattr(client, method)(path, json={}, headers=JSON)
+            if method == "post"
+            else client.get(path, headers=JSON)
+        )
+>       assert r.status_code == 401
+E       assert 404 == 401
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_category_routes.py:21: AssertionError
+_____ test_category_endpoints_require_session[post-/categories/1/delete] ______
+
+client = <FlaskClient <Flask 'taskcontrol'>>, method = 'post'
+path = '/categories/1/delete'
+
+    @pytest.mark.parametrize(
+        "method,path",
+        [
+            ("get", "/categories"),
+            ("post", "/categories"),
+            ("post", "/categories/1/edit"),
+            ("post", "/categories/1/delete"),
+        ],
+    )
+    def test_category_endpoints_require_session(client, method, path):
+        r = (
+            getattr(client, method)(path, json={}, headers=JSON)
+            if method == "post"
+            else client.get(path, headers=JSON)
+        )
+>       assert r.status_code == 401
+E       assert 404 == 401
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_category_routes.py:21: AssertionError
+___________________________ test_crud_category_json ___________________________
+
+auth_client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_crud_category_json(auth_client):
+        # 1. Crear
+        r = auth_client.post("/categories", json={"name": "Proyectos"}, headers=JSON)
+>       assert r.status_code == 201
+E       assert 404 == 201
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_category_routes.py:27: AssertionError
+___________________________ test_category_html_flow ___________________________
+
+auth_client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_category_html_flow(auth_client):
+        # GET vista
+        r = auth_client.get("/categories")
+>       assert r.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_category_routes.py:61: AssertionError
+________________ test_delete_category_unlinks_tasks_in_routes _________________
+
+auth_client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_delete_category_unlinks_tasks_in_routes(auth_client):
+        r_cat = auth_client.post("/categories", json={"name": "Urgente"}, headers=JSON)
+>       cat_id = r_cat.get_json()["data"]["id"]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'data'
+
+tests\integration\test_category_routes.py:82: KeyError
+__________________ test_other_user_category_isolation_routes __________________
+
+client = <FlaskClient <Flask 'taskcontrol'>>, user = <User 1>
+other_user = <User 2>
+
+    def test_other_user_category_isolation_routes(client, user, other_user):
+        # beto crea una categoria
+        client.post("/login", json={"email": "beto@example.com", "password": "clave1234"})
+        r_cat = client.post("/categories", json={"name": "Secreta Beto"}, headers=JSON)
+>       cat_id = r_cat.get_json()["data"]["id"]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'data'
+
+tests\integration\test_category_routes.py:108: KeyError
+______ test_new_post_endpoints_enforce_csrf[/tasks/1/priority-payload0] _______
+
+csrf_client = <FlaskClient <Flask 'taskcontrol'>>, path = '/tasks/1/priority'
+payload = {'priority': 'high'}
+
+    @pytest.mark.parametrize(
+        "path,payload",
+        [
+            ("/tasks/1/priority", {"priority": "high"}),
+            ("/categories", {"name": "Nueva"}),
+            ("/categories/1/edit", {"name": "Editada"}),
+            ("/categories/1/delete", {}),
+            ("/tasks/1/category", {"category_id": 1}),
+        ],
+    )
+    def test_new_post_endpoints_enforce_csrf(csrf_client, path, payload):
+        r = csrf_client.post(path, json=payload)
+>       assert r.status_code == 400
+E       assert 404 == 400
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_csrf.py:56: AssertionError
+_________ test_new_post_endpoints_enforce_csrf[/categories-payload1] __________
+
+csrf_client = <FlaskClient <Flask 'taskcontrol'>>, path = '/categories'
+payload = {'name': 'Nueva'}
+
+    @pytest.mark.parametrize(
+        "path,payload",
+        [
+            ("/tasks/1/priority", {"priority": "high"}),
+            ("/categories", {"name": "Nueva"}),
+            ("/categories/1/edit", {"name": "Editada"}),
+            ("/categories/1/delete", {}),
+            ("/tasks/1/category", {"category_id": 1}),
+        ],
+    )
+    def test_new_post_endpoints_enforce_csrf(csrf_client, path, payload):
+        r = csrf_client.post(path, json=payload)
+>       assert r.status_code == 400
+E       assert 404 == 400
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_csrf.py:56: AssertionError
+______ test_new_post_endpoints_enforce_csrf[/categories/1/edit-payload2] ______
+
+csrf_client = <FlaskClient <Flask 'taskcontrol'>>, path = '/categories/1/edit'
+payload = {'name': 'Editada'}
+
+    @pytest.mark.parametrize(
+        "path,payload",
+        [
+            ("/tasks/1/priority", {"priority": "high"}),
+            ("/categories", {"name": "Nueva"}),
+            ("/categories/1/edit", {"name": "Editada"}),
+            ("/categories/1/delete", {}),
+            ("/tasks/1/category", {"category_id": 1}),
+        ],
+    )
+    def test_new_post_endpoints_enforce_csrf(csrf_client, path, payload):
+        r = csrf_client.post(path, json=payload)
+>       assert r.status_code == 400
+E       assert 404 == 400
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_csrf.py:56: AssertionError
+_____ test_new_post_endpoints_enforce_csrf[/categories/1/delete-payload3] _____
+
+csrf_client = <FlaskClient <Flask 'taskcontrol'>>, path = '/categories/1/delete'
+payload = {}
+
+    @pytest.mark.parametrize(
+        "path,payload",
+        [
+            ("/tasks/1/priority", {"priority": "high"}),
+            ("/categories", {"name": "Nueva"}),
+            ("/categories/1/edit", {"name": "Editada"}),
+            ("/categories/1/delete", {}),
+            ("/tasks/1/category", {"category_id": 1}),
+        ],
+    )
+    def test_new_post_endpoints_enforce_csrf(csrf_client, path, payload):
+        r = csrf_client.post(path, json=payload)
+>       assert r.status_code == 400
+E       assert 404 == 400
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_csrf.py:56: AssertionError
+______ test_new_post_endpoints_enforce_csrf[/tasks/1/category-payload4] _______
+
+csrf_client = <FlaskClient <Flask 'taskcontrol'>>, path = '/tasks/1/category'
+payload = {'category_id': 1}
+
+    @pytest.mark.parametrize(
+        "path,payload",
+        [
+            ("/tasks/1/priority", {"priority": "high"}),
+            ("/categories", {"name": "Nueva"}),
+            ("/categories/1/edit", {"name": "Editada"}),
+            ("/categories/1/delete", {}),
+            ("/tasks/1/category", {"category_id": 1}),
+        ],
+    )
+    def test_new_post_endpoints_enforce_csrf(csrf_client, path, payload):
+        r = csrf_client.post(path, json=payload)
+>       assert r.status_code == 400
+E       assert 404 == 400
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_csrf.py:56: AssertionError
+___________________ test_priority_endpoints_require_session ___________________
+
+client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_priority_endpoints_require_session(client):
+>       assert client.post("/tasks/1/priority", json={"priority": "high"}, headers=JSON).status_code == 401
+E       AssertionError: assert 404 == 401
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+E        +    where <WrapperTestResponse streamed [404 NOT FOUND]> = post('/tasks/1/priority', json={'priority': 'high'}, headers={'Accept': 'application/json'})
+E        +      where post = <FlaskClient <Flask 'taskcontrol'>>.post
+
+tests\integration\test_task_routes.py:81: AssertionError
+______________________ test_set_task_priority_route_json ______________________
+
+auth_client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_set_task_priority_route_json(auth_client):
+        auth_client.post("/tasks", json={"title": "Tarea P"}, headers=JSON)
+        r = auth_client.post("/tasks/1/priority", json={"priority": "high"}, headers=JSON)
+>       assert r.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_task_routes.py:87: AssertionError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:07.990974+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Tarea P"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:07.990974+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Tarea P"}}
+______________________ test_set_task_priority_route_html ______________________
+
+auth_client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_set_task_priority_route_html(auth_client):
+        auth_client.post("/tasks", json={"title": "Tarea HTML"}, headers=JSON)
+        r = auth_client.post("/tasks/1/priority", data={"priority": "low"})
+>       assert r.status_code == 302
+E       assert 404 == 302
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_task_routes.py:96: AssertionError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:08.669582+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Tarea HTML"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:08.669582+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Tarea HTML"}}
+____________________ test_set_task_priority_invalid_value _____________________
+
+auth_client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_set_task_priority_invalid_value(auth_client):
+        auth_client.post("/tasks", json={"title": "Tarea P"}, headers=JSON)
+        r = auth_client.post("/tasks/1/priority", json={"priority": "invalid"}, headers=JSON)
+>       assert r.status_code == 400
+E       assert 404 == 400
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+
+tests\integration\test_task_routes.py:103: AssertionError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:09.352762+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Tarea P"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:09.352762+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Tarea P"}}
+______________________ test_task_priority_sorting_routes ______________________
+
+auth_client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_task_priority_sorting_routes(auth_client):
+        auth_client.post("/tasks", json={"title": "Baja", "priority": "low"}, headers=JSON)
+        auth_client.post("/tasks", json={"title": "Alta", "priority": "high"}, headers=JSON)
+        auth_client.post("/tasks", json={"title": "Media", "priority": "medium"}, headers=JSON)
+    
+        r = auth_client.get("/tasks?sort=priority", headers=JSON)
+        assert r.status_code == 200
+        titles = [t["title"] for t in r.get_json()["data"]["tasks"]]
+>       assert titles == ["Alta", "Media", "Baja"]
+E       AssertionError: assert ['Media', 'Alta', 'Baja'] == ['Alta', 'Media', 'Baja']
+E         
+E         At index 0 diff: 'Media' != 'Alta'
+E         
+E         Full diff:
+E           [
+E         +     'Media',
+E               'Alta',...
+E         
+E         ...Full output truncated (3 lines hidden), use '-vv' to show
+
+tests\integration\test_task_routes.py:114: AssertionError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:10.002747+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Baja"}}
+{"timestamp": "2026-10-17T16:40:10.010148+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 2, "details": {"title": "Alta"}}
+{"timestamp": "2026-10-17T16:40:10.018868+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 3, "details": {"title": "Media"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:10.002747+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Baja"}}
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:10.010148+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 2, "details": {"title": "Alta"}}
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:10.018868+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 3, "details": {"title": "Media"}}
+________________ test_task_category_endpoints_require_session _________________
+
+client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_task_category_endpoints_require_session(client):
+>       assert client.post("/tasks/1/category", json={"category_id": 1}, headers=JSON).status_code == 401
+E       AssertionError: assert 404 == 401
+E        +  where 404 = <WrapperTestResponse streamed [404 NOT FOUND]>.status_code
+E        +    where <WrapperTestResponse streamed [404 NOT FOUND]> = post('/tasks/1/category', json={'category_id': 1}, headers={'Accept': 'application/json'})
+E        +      where post = <FlaskClient <Flask 'taskcontrol'>>.post
+
+tests\integration\test_task_routes.py:125: AssertionError
+_______________________ test_assign_task_category_route _______________________
+
+auth_client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_assign_task_category_route(auth_client):
+        r_cat = auth_client.post("/categories", json={"name": "Trabajo"}, headers=JSON)
+>       cat_id = r_cat.get_json()["data"]["id"]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'data'
+
+tests\integration\test_task_routes.py:130: KeyError
+________________ test_cannot_assign_other_user_category_route _________________
+
+client = <FlaskClient <Flask 'taskcontrol'>>, user = <User 1>
+other_user = <User 2>
+
+    def test_cannot_assign_other_user_category_route(client, user, other_user):
+        # beto crea cat
+        client.post("/login", json={"email": "beto@example.com", "password": "clave1234"})
+        r_cat = client.post("/categories", json={"name": "Beto Cat"}, headers=JSON)
+>       beto_cat_id = r_cat.get_json()["data"]["id"]
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'data'
+
+tests\integration\test_task_routes.py:147: KeyError
+_______________________ test_filter_by_category_routes ________________________
+
+auth_client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_filter_by_category_routes(auth_client):
+        r_c1 = auth_client.post("/categories", json={"name": "C1"}, headers=JSON)
+>       c1_id = r_c1.get_json()["data"]["id"]
+                ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'data'
+
+tests\integration\test_task_routes.py:159: KeyError
+_________________________ test_task_overdue_in_routes _________________________
+
+auth_client = <FlaskClient <Flask 'taskcontrol'>>
+
+    def test_task_overdue_in_routes(auth_client):
+        from datetime import datetime, timedelta, timezone
+    
+        yesterday = (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
+        today = datetime.now(timezone.utc).date().isoformat()
+    
+        auth_client.post("/tasks", json={"title": "Vencida", "due_date": yesterday}, headers=JSON)
+        auth_client.post("/tasks", json={"title": "Hoy", "due_date": today}, headers=JSON)
+    
+        # JSON expone is_overdue
+        r = auth_client.get("/tasks", headers=JSON)
+        assert r.status_code == 200
+        tasks = r.get_json()["data"]["tasks"]
+        overdue_task = [t for t in tasks if t["title"] == "Vencida"][0]
+        today_task = [t for t in tasks if t["title"] == "Hoy"][0]
+>       assert overdue_task["is_overdue"] is True
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'is_overdue'
+
+tests\integration\test_task_routes.py:199: KeyError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:12.903932+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Vencida"}}
+{"timestamp": "2026-10-17T16:40:12.914429+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 2, "details": {"title": "Hoy"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:12.903932+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Vencida"}}
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:12.914429+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 2, "details": {"title": "Hoy"}}
+________________________ test_create_category_success _________________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_create_category_success(app, user):
+        from taskcontrol.models import AuditLog
+>       from taskcontrol.services import category_service as cs
+E       ImportError: cannot import name 'category_service' from 'taskcontrol.services' (G:\INFO 03-02-2021\DOCUMENTOS\Jehg\jehg\UNIVERSIDAD\Disruptivas\SDD-Tecnologias-Disruptivas-main\src\taskcontrol\services\__init__.py)
+
+tests\unit\test_category_service.py:9: ImportError
+_____________ test_category_name_unique_per_user_case_insensitive _____________
+
+app = <Flask 'taskcontrol'>, user = <User 1>, other_user = <User 2>
+
+    def test_category_name_unique_per_user_case_insensitive(app, user, other_user):
+>       from taskcontrol.services import category_service as cs
+E       ImportError: cannot import name 'category_service' from 'taskcontrol.services' (G:\INFO 03-02-2021\DOCUMENTOS\Jehg\jehg\UNIVERSIDAD\Disruptivas\SDD-Tecnologias-Disruptivas-main\src\taskcontrol\services\__init__.py)
+
+tests\unit\test_category_service.py:21: ImportError
+_____________ test_cannot_create_more_than_50_categories_per_user _____________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_cannot_create_more_than_50_categories_per_user(app, user):
+>       from taskcontrol.services import category_service as cs
+E       ImportError: cannot import name 'category_service' from 'taskcontrol.services' (G:\INFO 03-02-2021\DOCUMENTOS\Jehg\jehg\UNIVERSIDAD\Disruptivas\SDD-Tecnologias-Disruptivas-main\src\taskcontrol\services\__init__.py)
+
+tests\unit\test_category_service.py:37: ImportError
+_____________________ test_get_user_categories_isolation ______________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>, other_user = <User 2>
+
+    def test_get_user_categories_isolation(app, user, other_user):
+>       from taskcontrol.services import category_service as cs
+E       ImportError: cannot import name 'category_service' from 'taskcontrol.services' (G:\INFO 03-02-2021\DOCUMENTOS\Jehg\jehg\UNIVERSIDAD\Disruptivas\SDD-Tecnologias-Disruptivas-main\src\taskcontrol\services\__init__.py)
+
+tests\unit\test_category_service.py:47: ImportError
+_________ test_rename_category_preserves_task_links_and_records_audit _________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_rename_category_preserves_task_links_and_records_audit(app, user):
+        from taskcontrol.models import AuditLog, Task
+>       from taskcontrol.services import category_service as cs
+E       ImportError: cannot import name 'category_service' from 'taskcontrol.services' (G:\INFO 03-02-2021\DOCUMENTOS\Jehg\jehg\UNIVERSIDAD\Disruptivas\SDD-Tecnologias-Disruptivas-main\src\taskcontrol\services\__init__.py)
+
+tests\unit\test_category_service.py:65: ImportError
+_______ test_delete_category_unlinks_tasks_setting_category_id_to_null ________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_delete_category_unlinks_tasks_setting_category_id_to_null(app, user):
+>       from taskcontrol.models import AuditLog, Category, Task
+E       ImportError: cannot import name 'Category' from 'taskcontrol.models' (G:\INFO 03-02-2021\DOCUMENTOS\Jehg\jehg\UNIVERSIDAD\Disruptivas\SDD-Tecnologias-Disruptivas-main\src\taskcontrol\models\__init__.py)
+
+tests\unit\test_category_service.py:84: ImportError
+________________________ test_category_name_validation ________________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_category_name_validation(app, user):
+>       from taskcontrol.services import category_service as cs
+E       ImportError: cannot import name 'category_service' from 'taskcontrol.services' (G:\INFO 03-02-2021\DOCUMENTOS\Jehg\jehg\UNIVERSIDAD\Disruptivas\SDD-Tecnologias-Disruptivas-main\src\taskcontrol\services\__init__.py)
+
+tests\unit\test_category_service.py:107: ImportError
+_________________ test_default_priority_is_medium_on_creation _________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_default_priority_is_medium_on_creation(app, user):
+        t = ts.create_task(user.id, "Sin prioridad", None, None)
+>       assert t.priority == "medium"
+               ^^^^^^^^^^
+E       AttributeError: 'Task' object has no attribute 'priority'
+
+tests\unit\test_task_service.py:132: AttributeError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:37.409827+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Sin prioridad"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:37.409827+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "Sin prioridad"}}
+__________________ test_invalid_priority_raises_domain_error __________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_invalid_priority_raises_domain_error(app, user):
+        with pytest.raises(ValidationError):
+>           ts.create_task(user.id, "T", None, None, priority="invalid")
+E           TypeError: create_task() got an unexpected keyword argument 'priority'
+
+tests\unit\test_task_service.py:137: TypeError
+__________________ test_tasks_sorted_by_priority_descending ___________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_tasks_sorted_by_priority_descending(app, user):
+>       low = ts.create_task(user.id, "Low", None, None, priority="low")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: create_task() got an unexpected keyword argument 'priority'
+
+tests\unit\test_task_service.py:144: TypeError
+_______________ test_tasks_priority_tiebreak_by_created_at_desc _______________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_tasks_priority_tiebreak_by_created_at_desc(app, user):
+>       h1 = ts.create_task(user.id, "H1", None, None, priority="high")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: create_task() got an unexpected keyword argument 'priority'
+
+tests\unit\test_task_service.py:156: TypeError
+_______________________ test_set_task_priority_success ________________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_set_task_priority_success(app, user):
+        t = ts.create_task(user.id, "T", None, None)
+>       updated = ts.set_task_priority(user.id, t.id, "high")
+                  ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'taskcontrol.services.task_service' has no attribute 'set_task_priority'
+
+tests\unit\test_task_service.py:166: AttributeError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:38.966607+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:38.966607+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+__________________ test_cannot_set_priority_on_deleted_task ___________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_cannot_set_priority_on_deleted_task(app, user):
+        from taskcontrol.services.errors import TaskDeletedError
+    
+        t = ts.create_task(user.id, "T", None, None)
+        ts.delete_task(user.id, t.id)
+        with pytest.raises(TaskDeletedError):
+>           ts.set_task_priority(user.id, t.id, "high")
+            ^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'taskcontrol.services.task_service' has no attribute 'set_task_priority'
+
+tests\unit\test_task_service.py:185: AttributeError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:39.318611+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+{"timestamp": "2026-10-17T16:40:39.318611+00:00", "actor_id": 1, "action": "TASK_DELETED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:39.318611+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:39.318611+00:00", "actor_id": 1, "action": "TASK_DELETED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+_________________ test_cannot_set_priority_on_other_user_task _________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>, other_user = <User 2>
+
+    def test_cannot_set_priority_on_other_user_task(app, user, other_user):
+        t = ts.create_task(user.id, "T", None, None)
+        with pytest.raises(NotFoundError):
+>           ts.set_task_priority(other_user.id, t.id, "high")
+            ^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'taskcontrol.services.task_service' has no attribute 'set_task_priority'
+
+tests\unit\test_task_service.py:191: AttributeError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:39.942961+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:39.942961+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+______________________ test_assign_task_category_success ______________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_assign_task_category_success(app, user):
+>       from taskcontrol.services.category_service import create_category
+E       ModuleNotFoundError: No module named 'taskcontrol.services.category_service'
+
+tests\unit\test_task_service.py:198: ModuleNotFoundError
+________________ test_cannot_assign_category_from_another_user ________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>, other_user = <User 2>
+
+    def test_cannot_assign_category_from_another_user(app, user, other_user):
+>       from taskcontrol.services.category_service import create_category
+E       ModuleNotFoundError: No module named 'taskcontrol.services.category_service'
+
+tests\unit\test_task_service.py:216: ModuleNotFoundError
+_________________ test_cannot_assign_category_to_deleted_task _________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_cannot_assign_category_to_deleted_task(app, user):
+>       from taskcontrol.services.category_service import create_category
+E       ModuleNotFoundError: No module named 'taskcontrol.services.category_service'
+
+tests\unit\test_task_service.py:226: ModuleNotFoundError
+______________________ test_filter_tasks_by_category_id _______________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_filter_tasks_by_category_id(app, user):
+>       from taskcontrol.services.category_service import create_category
+E       ModuleNotFoundError: No module named 'taskcontrol.services.category_service'
+
+tests\unit\test_task_service.py:237: ModuleNotFoundError
+_______________________ test_filter_tasks_uncategorized _______________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_filter_tasks_uncategorized(app, user):
+>       from taskcontrol.services.category_service import create_category
+E       ModuleNotFoundError: No module named 'taskcontrol.services.category_service'
+
+tests\unit\test_task_service.py:252: ModuleNotFoundError
+___________ test_get_tasks_combines_status_category_id_and_sort_by ____________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_get_tasks_combines_status_category_id_and_sort_by(app, user):
+>       from taskcontrol.services.category_service import create_category
+E       ModuleNotFoundError: No module named 'taskcontrol.services.category_service'
+
+tests\unit\test_task_service.py:263: ModuleNotFoundError
+________ test_filter_uncategorized_and_nonexistent_category_isolation _________
+
+app = <Flask 'taskcontrol'>, user = <User 1>, other_user = <User 2>
+
+    def test_filter_uncategorized_and_nonexistent_category_isolation(app, user, other_user):
+>       from taskcontrol.services.category_service import create_category
+E       ModuleNotFoundError: No module named 'taskcontrol.services.category_service'
+
+tests\unit\test_task_service.py:284: ModuleNotFoundError
+___________ test_completed_task_with_past_due_date_is_never_overdue ___________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_completed_task_with_past_due_date_is_never_overdue(app, user):
+        from datetime import datetime, timedelta, timezone
+    
+        yesterday = datetime.now(timezone.utc).date() - timedelta(days=1)
+        t = ts.create_task(user.id, "T", None, yesterday.isoformat())
+        ts.change_task_status(user.id, t.id, "completed")
+>       assert t.is_overdue is False
+               ^^^^^^^^^^^^
+E       AttributeError: 'Task' object has no attribute 'is_overdue'
+
+tests\unit\test_task_service.py:303: AttributeError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:43.233048+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+{"timestamp": "2026-10-17T16:40:43.238571+00:00", "actor_id": 1, "action": "TASK_STATUS_CHANGED", "entity_type": "Task", "entity_id": 1, "details": {"old_status": "pending", "new_status": "completed"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:43.233048+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:43.238571+00:00", "actor_id": 1, "action": "TASK_STATUS_CHANGED", "entity_type": "Task", "entity_id": 1, "details": {"old_status": "pending", "new_status": "completed"}}
+_________ test_soft_deleted_task_with_past_due_date_is_never_overdue __________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_soft_deleted_task_with_past_due_date_is_never_overdue(app, user):
+        from datetime import datetime, timedelta, timezone
+    
+        yesterday = datetime.now(timezone.utc).date() - timedelta(days=1)
+        t = ts.create_task(user.id, "T", None, yesterday.isoformat())
+        ts.delete_task(user.id, t.id)
+>       assert t.is_overdue is False
+               ^^^^^^^^^^^^
+E       AttributeError: 'Task' object has no attribute 'is_overdue'
+
+tests\unit\test_task_service.py:312: AttributeError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:43.850361+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+{"timestamp": "2026-10-17T16:40:43.852473+00:00", "actor_id": 1, "action": "TASK_DELETED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:43.850361+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:43.852473+00:00", "actor_id": 1, "action": "TASK_DELETED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+_______ test_pending_or_in_progress_task_with_past_due_date_is_overdue ________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_pending_or_in_progress_task_with_past_due_date_is_overdue(app, user):
+        from datetime import datetime, timedelta, timezone
+    
+        yesterday = datetime.now(timezone.utc).date() - timedelta(days=1)
+        t1 = ts.create_task(user.id, "T1", None, yesterday.isoformat())
+        t2 = ts.create_task(user.id, "T2", None, yesterday.isoformat())
+        ts.change_task_status(user.id, t2.id, "in_progress")
+    
+>       assert t1.is_overdue is True
+               ^^^^^^^^^^^^^
+E       AttributeError: 'Task' object has no attribute 'is_overdue'
+
+tests\unit\test_task_service.py:323: AttributeError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:44.213876+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T1"}}
+{"timestamp": "2026-10-17T16:40:44.220013+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 2, "details": {"title": "T2"}}
+{"timestamp": "2026-10-17T16:40:44.226623+00:00", "actor_id": 1, "action": "TASK_STATUS_CHANGED", "entity_type": "Task", "entity_id": 2, "details": {"old_status": "pending", "new_status": "in_progress"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:44.213876+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T1"}}
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:44.220013+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 2, "details": {"title": "T2"}}
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:44.226623+00:00", "actor_id": 1, "action": "TASK_STATUS_CHANGED", "entity_type": "Task", "entity_id": 2, "details": {"old_status": "pending", "new_status": "in_progress"}}
+______________ test_task_with_due_date_today_is_not_overdue_utc _______________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_task_with_due_date_today_is_not_overdue_utc(app, user):
+        from datetime import datetime, timezone
+    
+        today = datetime.now(timezone.utc).date()
+        t = ts.create_task(user.id, "T", None, today.isoformat())
+>       assert t.is_overdue is False
+               ^^^^^^^^^^^^
+E       AttributeError: 'Task' object has no attribute 'is_overdue'
+
+tests\unit\test_task_service.py:332: AttributeError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:44.562260+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:44.562260+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+__________________ test_task_without_due_date_is_not_overdue __________________
+
+app = <Flask 'taskcontrol'>, user = <User 1>
+
+    def test_task_without_due_date_is_not_overdue(app, user):
+        t = ts.create_task(user.id, "T", None, None)
+>       assert t.is_overdue is False
+               ^^^^^^^^^^^^
+E       AttributeError: 'Task' object has no attribute 'is_overdue'
+
+tests\unit\test_task_service.py:337: AttributeError
+---------------------------- Captured stderr call -----------------------------
+{"timestamp": "2026-10-17T16:40:44.914423+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+------------------------------ Captured log call ------------------------------
+INFO     taskcontrol.audit:audit_service.py:24 {"timestamp": "2026-10-17T16:40:44.914423+00:00", "actor_id": 1, "action": "TASK_CREATED", "entity_type": "Task", "entity_id": 1, "details": {"title": "T"}}
+=========================== short test summary info ===========================
+FAILED tests/integration/test_category_routes.py::test_category_endpoints_require_session[get-/categories]
+FAILED tests/integration/test_category_routes.py::test_category_endpoints_require_session[post-/categories]
+FAILED tests/integration/test_category_routes.py::test_category_endpoints_require_session[post-/categories/1/edit]
+FAILED tests/integration/test_category_routes.py::test_category_endpoints_require_session[post-/categories/1/delete]
+FAILED tests/integration/test_category_routes.py::test_crud_category_json - a...
+FAILED tests/integration/test_category_routes.py::test_category_html_flow - a...
+FAILED tests/integration/test_category_routes.py::test_delete_category_unlinks_tasks_in_routes
+FAILED tests/integration/test_category_routes.py::test_other_user_category_isolation_routes
+FAILED tests/integration/test_csrf.py::test_new_post_endpoints_enforce_csrf[/tasks/1/priority-payload0]
+FAILED tests/integration/test_csrf.py::test_new_post_endpoints_enforce_csrf[/categories-payload1]
+FAILED tests/integration/test_csrf.py::test_new_post_endpoints_enforce_csrf[/categories/1/edit-payload2]
+FAILED tests/integration/test_csrf.py::test_new_post_endpoints_enforce_csrf[/categories/1/delete-payload3]
+FAILED tests/integration/test_csrf.py::test_new_post_endpoints_enforce_csrf[/tasks/1/category-payload4]
+FAILED tests/integration/test_task_routes.py::test_priority_endpoints_require_session
+FAILED tests/integration/test_task_routes.py::test_set_task_priority_route_json
+FAILED tests/integration/test_task_routes.py::test_set_task_priority_route_html
+FAILED tests/integration/test_task_routes.py::test_set_task_priority_invalid_value
+FAILED tests/integration/test_task_routes.py::test_task_priority_sorting_routes
+FAILED tests/integration/test_task_routes.py::test_task_category_endpoints_require_session
+FAILED tests/integration/test_task_routes.py::test_assign_task_category_route
+FAILED tests/integration/test_task_routes.py::test_cannot_assign_other_user_category_route
+FAILED tests/integration/test_task_routes.py::test_filter_by_category_routes
+FAILED tests/integration/test_task_routes.py::test_task_overdue_in_routes - K...
+FAILED tests/unit/test_category_service.py::test_create_category_success - Im...
+FAILED tests/unit/test_category_service.py::test_category_name_unique_per_user_case_insensitive
+FAILED tests/unit/test_category_service.py::test_cannot_create_more_than_50_categories_per_user
+FAILED tests/unit/test_category_service.py::test_get_user_categories_isolation
+FAILED tests/unit/test_category_service.py::test_rename_category_preserves_task_links_and_records_audit
+FAILED tests/unit/test_category_service.py::test_delete_category_unlinks_tasks_setting_category_id_to_null
+FAILED tests/unit/test_category_service.py::test_category_name_validation - I...
+FAILED tests/unit/test_task_service.py::test_default_priority_is_medium_on_creation
+FAILED tests/unit/test_task_service.py::test_invalid_priority_raises_domain_error
+FAILED tests/unit/test_task_service.py::test_tasks_sorted_by_priority_descending
+FAILED tests/unit/test_task_service.py::test_tasks_priority_tiebreak_by_created_at_desc
+FAILED tests/unit/test_task_service.py::test_set_task_priority_success - Attr...
+FAILED tests/unit/test_task_service.py::test_cannot_set_priority_on_deleted_task
+FAILED tests/unit/test_task_service.py::test_cannot_set_priority_on_other_user_task
+FAILED tests/unit/test_task_service.py::test_assign_task_category_success - M...
+FAILED tests/unit/test_task_service.py::test_cannot_assign_category_from_another_user
+FAILED tests/unit/test_task_service.py::test_cannot_assign_category_to_deleted_task
+FAILED tests/unit/test_task_service.py::test_filter_tasks_by_category_id - Mo...
+FAILED tests/unit/test_task_service.py::test_filter_tasks_uncategorized - Mod...
+FAILED tests/unit/test_task_service.py::test_get_tasks_combines_status_category_id_and_sort_by
+FAILED tests/unit/test_task_service.py::test_filter_uncategorized_and_nonexistent_category_isolation
+FAILED tests/unit/test_task_service.py::test_completed_task_with_past_due_date_is_never_overdue
+FAILED tests/unit/test_task_service.py::test_soft_deleted_task_with_past_due_date_is_never_overdue
+FAILED tests/unit/test_task_service.py::test_pending_or_in_progress_task_with_past_due_date_is_overdue
+FAILED tests/unit/test_task_service.py::test_task_with_due_date_today_is_not_overdue_utc
+FAILED tests/unit/test_task_service.py::test_task_without_due_date_is_not_overdue
+================== 49 failed, 102 passed in 64.25s (0:01:04) ==================

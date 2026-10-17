@@ -63,3 +63,29 @@ class FakeSender:
 @pytest.fixture()
 def sender():
     return FakeSender()
+
+
+@pytest.fixture()
+def category(app, user):
+    from taskcontrol.services.category_service import create_category
+
+    return create_category(user.id, "Trabajo")
+
+
+@pytest.fixture()
+def other_category(app, other_user):
+    from taskcontrol.services.category_service import create_category
+
+    return create_category(other_user.id, "Personal")
+
+
+@pytest.fixture()
+def test_dates():
+    from datetime import datetime, timedelta, timezone
+
+    today = datetime.now(timezone.utc).date()
+    return {
+        "yesterday": (today - timedelta(days=1)).isoformat(),
+        "today": today.isoformat(),
+        "tomorrow": (today + timedelta(days=1)).isoformat(),
+    }

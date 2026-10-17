@@ -13,9 +13,24 @@ button,.btn{background:#2f5bea;color:#fff;border:0;padding:.45rem .9rem;border-r
 ul.tasks{list-style:none;padding:0}
 li.task{background:#fff;border-radius:8px;padding:.8rem 1rem;margin-bottom:.7rem;box-shadow:0 1px 2px #0001}
 .title{font-weight:600}.meta{display:flex;gap:.8rem;font-size:.85rem;color:#556;margin:.3rem 0}
-.badge{padding:.1rem .5rem;border-radius:999px;background:#e5e9f2}
+.badge{padding:.1rem .5rem;border-radius:999px;background:#e5e9f2;font-size:.8rem}
 .badge.in_progress{background:#fff3cd}.badge.completed{background:#d4edda}
+.badge-priority-high{background:#fde8e8;color:#9b1c1c;font-weight:600}
+.badge-priority-medium{background:#e1effe;color:#1e429f}
+.badge-priority-low{background:#def7ec;color:#03543f}
+.badge-overdue{background:#c81e1e;color:#fff;font-weight:700}
+.badge-category{background:#edebfe;color:#5521b5}
+.nav-links{display:flex;gap:1rem;margin-right:auto;margin-left:1.5rem}
+.nav-links a{color:#cfd6e4;text-decoration:none}
+.nav-links a:hover{color:#fff}
 .desc{white-space:pre-wrap;margin:.4rem 0}
 .actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
 .actions form{margin:0}.actions button{background:#e5e9f2;color:#1d2433;padding:.25rem .6rem}
 .actions button.danger{background:#fde8e8;color:#9b1c1c}
+.filter-bar{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;background:#fff;padding:.6rem 1rem;border-radius:8px;margin-bottom:1rem}
+.category-item{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:.7rem 1rem;border-radius:6px;margin-bottom:.5rem}
+.inline-form{display:inline-flex;gap:.3rem;margin:0}
+.input-sm{width:auto;padding:.2rem .4rem}
+.btn-sm{padding:.25rem .5rem;font-size:.85rem}
+.btn-danger{background:#e02424;color:#fff}
+

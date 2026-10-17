@@ -1,3 +1,21 @@
 <label>Título <input type="text" name="title" maxlength="200" value="{{ form.get('title', '') or '' }}" required></label>
 <label>Descripción <textarea name="description" maxlength="2000" rows="4">{{ form.get('description', '') or '' }}</textarea></label>
 <label>Fecha límite <input type="date" name="due_date" value="{{ form.get('due_date', '') or '' }}"></label>
+<label>Prioridad
+  <select name="priority">
+    <option value="high" {% if form.get('priority') == 'high' %}selected{% endif %}>Alta</option>
+    <option value="medium" {% if form.get('priority') == 'medium' or not form.get('priority') %}selected{% endif %}>Media</option>
+    <option value="low" {% if form.get('priority') == 'low' %}selected{% endif %}>Baja</option>
+  </select>
+</label>
+<label>Categoría
+  <select name="category_id">
+    <option value="" {% if not form.get('category_id') and not (form.get('category') and form.get('category').get('id')) %}selected{% endif %}>Sin categoría</option>
+    {% if categories %}
+      {% for cat in categories %}
+        <option value="{{ cat.id }}" {% if form.get('category_id') == cat.id or (form.get('category') and form.get('category').get('id') == cat.id) %}selected{% endif %}>{{ cat.name }}</option>
+      {% endfor %}
+    {% endif %}
+  </select>
+</label>
+
