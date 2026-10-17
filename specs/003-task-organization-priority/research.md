@@ -30,7 +30,7 @@ El requerimiento HU-07 exige que toda tarea tenga una prioridad asignada dentro 
 3. **Validación en Dominio (`TaskService`)**:
    - Constante de dominio: `ALLOWED_PRIORITIES = {'high', 'medium', 'low'}`.
    - Si se envía un valor no reconocido, se rechaza lanzando `InvalidPriorityError` (HTTP 400).
-   - Se permite cambiar la prioridad en cualquier momento mediante método dedicado `set_task_priority(user_id, task_id, priority)` o en `update_task`.
+   - Se permite cambiar la prioridad en cualquier momento mediante método dedicado `set_task_priority(user_id, task_id, priority)` o en `update_task`, registrando el evento inmutable de auditoría `TASK_UPDATED` con metadatos `old_priority` y `new_priority`.
 
 ### Justificación frente al Principio V (Simplicidad)
 - *Alternativas rechazadas*:
@@ -43,19 +43,21 @@ El requerimiento HU-07 exige que toda tarea tenga una prioridad asignada dentro 
 ## 2. Entidad `Category` y Desvinculación sin Cascada (HU-08)
 
 ### Contexto y Requisitos
-El requerimiento HU-08 exige que los usuarios puedan crear categorías para agrupar tareas. Una tarea puede pertenecer a máximo una categoría o a ninguna. Regla innegociable de negocio: eliminar una categoría **nunca** debe eliminar en cascada sus tareas; las tareas deben desvincularse y quedar sin categoría (`category_id = NULL`).
+El requerimiento HU-08 exige que los usuarios puedan crear categorías para agrupar tareas. Una tarea puede pertenecer a máximo una categoría o a ninguna. Regla innegociable de negocio: eliminar una categoría **nunca** debe eliminar en cascada sus tareas; las tareas deben desvincularse y quedar sin categoría (`category_id = NULL`). Asimismo, se debe admitir el renombrado de categorías y un tope de 50 categorías por usuario.
 
 ### Decisión
 1. **Separación Estricta de Capas (Principio II)**:
    - Capa de Modelos: `Category` (`src/taskcontrol/models/category.py`).
    - Capa de Dominio: `CategoryService` (`src/taskcontrol/services/category_service.py`).
    - Capa HTTP: Blueprint `categories` (`src/taskcontrol/blueprints/categories.py`).
-2. **Estructura de la Entidad `Category`**:
+2. **Estructura de la Entidad `Category` y Validaciones**:
    - `id`: Entero, PK.
    - `user_id`: Entero, FK a `users.id` con `ON DELETE CASCADE`.
    - `name`: `String(50)`, `nullable=False`.
    - `created_at`: `DateTime(timezone=True)`.
-   - Restricción única compuesta: `(user_id, name)` para impedir categorías duplicadas por usuario.
+   - Restricción única compuesta y normalización: comprobación en minúsculas (`case-insensitive`) tras trim por usuario.
+   - Límite de capacidad: máximo 50 categorías creadas por usuario.
+   - Renombrado seguro: `update_category` permite cambiar el nombre emitiendo `CATEGORY_UPDATED` (`old_name`, `new_name`) y preservando intactas las tareas asociadas.
 3. **Clave Foránea en `Task` y Política de Eliminación**:
    - `category_id = db.Column(db.Integer, db.ForeignKey('categories.id', ondelete='SET NULL'), nullable=True)`.
    - A nivel DDL de base de datos relacional, la regla `ON DELETE SET NULL` delega en el motor relacional la desvinculación automática de tareas al eliminar la categoría.
@@ -106,17 +108,17 @@ El endpoint existente `GET /tasks` debe admitir ordenamiento por prioridad y fil
 ### Decisión
 1. **Parámetros de Consulta (Query String)**:
    - `status`: `'all' | 'pending' | 'in_progress' | 'completed'` (por defecto `'all'`).
-   - `sort_by`: `'created_desc' | 'priority'` (por defecto `'created_desc'`).
-   - `category_id`: `'all' | 'none' | <int>` (por defecto `'all'`).
+   - `category`: `'all' | 'uncategorized' | <int>` (por defecto `'all'`; soporta alias retrocompatible `category_id` y valor `'none'`).
+   - `sort`: `'created_at' | 'priority'` (por defecto `'created_at'`; soporta alias retrocompatible `sort_by` y valor `'created_desc'`).
 2. **Composición Dinámica en `TaskService.get_user_tasks`**:
    - Base query: `Task.query.filter(Task.user_id == user_id, Task.is_deleted == False)`.
    - Filtro de estado: si `status != 'all'`, agrega `filter(Task.status == status)`.
    - Filtro de categoría:
-     - Si `category_id == 'none'`: agrega `filter(Task.category_id.is_(None))`.
-     - Si `category_id` es numérico: valida existencia y propiedad, y agrega `filter(Task.category_id == category_id)`.
+     - Si `category in ('uncategorized', 'none')`: agrega `filter(Task.category_id.is_(None))`.
+     - Si `category != 'all'`: si es ID numérico válido, agrega `filter(Task.category_id == category_id)`.
    - Ordenamiento:
-     - Si `sort_by == 'priority'`: aplica `order_by(priority_case_weight.desc(), Task.created_at.desc())`.
-     - Si `sort_by == 'created_desc'`: aplica `order_by(Task.created_at.desc())`.
+     - Si `sort == 'priority'`: aplica `order_by(priority_case_weight.desc(), Task.created_at.desc())`.
+     - Si `sort in ('created_at', 'created_desc')`: aplica `order_by(Task.created_at.desc())`.
 
 ---
 

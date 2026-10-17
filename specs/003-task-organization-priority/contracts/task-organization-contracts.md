@@ -22,13 +22,13 @@ En estricto cumplimiento del Principio VII, **todas las peticiones mutantes con 
 - **Autenticación requerida**: **SÍ** (`@login_required`).
 - **Parámetros de Consulta (Query String)**:
   - `status` (opcional, string): `'all'` (defecto), `'pending'`, `'in_progress'`, `'completed'`.
-  - `sort_by` (opcional, string): 
-    - `'created_desc'` (defecto): Ordena por fecha de creación descendente (`created_at DESC`).
-    - `'priority'`: Ordena por nivel de prioridad descendente (`high` $\rightarrow$ `medium` $\rightarrow$ `low`), utilizando `created_at DESC` como criterio de desempate secundario.
-  - `category_id` (opcional, string/entero):
+  - `category` (opcional, string/entero):
     - `'all'` (defecto): Incluye tareas sin importar su categoría.
-    - `'none'`: Filtra exclusivamente tareas que NO tienen categoría asignada (`category_id IS NULL`).
+    - `'uncategorized'`: Filtra exclusivamente tareas que NO tienen categoría asignada (`category_id IS NULL`). (Soporta alias retrocompatible `'none'`).
     - `<int>` (e.g. `2`): Filtra tareas asignadas a la categoría con ID especificado (debe pertenecer al usuario).
+  - `sort` (opcional, string): 
+    - `'created_at'` (defecto): Ordena por fecha de creación descendente (`created_at DESC`). (Soporta alias retrocompatible `'created_desc'`).
+    - `'priority'`: Ordena por nivel de prioridad descendente (`high` $\rightarrow$ `medium` $\rightarrow$ `low`), utilizando `created_at DESC` como criterio de desempate secundario.
 - **Cálculo de `is_overdue` en la respuesta (Backend Only - Principio III)**:
   - Cada tarea expone el campo booleano `is_overdue`.
   - Regla de evaluación en el servidor:
@@ -84,8 +84,8 @@ En estricto cumplimiento del Principio VII, **todas las peticiones mutantes con 
         ],
         "filters": {
           "status": "all",
-          "category_id": "all",
-          "sort_by": "priority"
+          "category": "all",
+          "sort": "priority"
         },
         "total": 3
       }
@@ -105,7 +105,7 @@ En estricto cumplimiento del Principio VII, **todas las peticiones mutantes con 
 ## 2. Modificación Rápida de Prioridad (`HU-07`)
 
 ### 2.1 `POST /tasks/<int:task_id>/priority`
-- **Descripción**: Actualiza directamente la prioridad de una tarea activa y emite el evento de auditoría `TASK_PRIORITY_CHANGED`.
+- **Descripción**: Actualiza directamente la prioridad de una tarea activa y emite el evento de auditoría `TASK_UPDATED` con metadatos `old_priority` y `new_priority`.
 - **Autenticación requerida**: **SÍ** (`@login_required`).
 - **Protección CSRF**: Requerida.
 - **Payload de Entrada** (`application/x-www-form-urlencoded` o `application/json`):

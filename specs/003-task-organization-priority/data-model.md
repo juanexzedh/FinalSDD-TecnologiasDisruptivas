@@ -79,6 +79,8 @@ Constraints & Indexes:
 **Reglas de Dominio**:
 - El nombre es obligatorio, normalizado con trim, con longitud entre 1 y 50 caracteres.
 - Un usuario no puede tener dos categorías con el mismo nombre (insensible a mayúsculas/minúsculas).
+- Límite máximo de hasta 50 categorías por cuenta de usuario.
+- Se permite renombrar la categoría mediante `update_category`; las tareas vinculadas conservan intacta su relación referencial (`category_id`).
 - Una categoría solo es visible y utilizable por su usuario creador (`user_id`).
 
 ---
@@ -134,8 +136,8 @@ Indexes:
 
 ### 2.3 Entidad `AuditLog` (Nuevas Acciones)
 Se extiende el catálogo de eventos auditados:
-- `TASK_PRIORITY_CHANGED`: Registra cambio de prioridad con `previous_priority` y `new_priority`.
+- `TASK_UPDATED`: Registra cambio de prioridad capturando metadatos `{"old_priority": ..., "new_priority": ...}`.
 - `TASK_CATEGORY_ASSIGNED`: Registra asignación o desasignación de categoría (`previous_category_id`, `new_category_id`).
 - `CATEGORY_CREATED`: Registra creación de categoría por un usuario.
-- `CATEGORY_UPDATED`: Registra modificación de nombre de categoría.
+- `CATEGORY_UPDATED`: Registra modificación o renombrado de nombre de categoría capturando `{"old_name": ..., "new_name": ...}`.
 - `CATEGORY_DELETED`: Registra eliminación de categoría.

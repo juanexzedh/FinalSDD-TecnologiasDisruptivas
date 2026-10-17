@@ -76,13 +76,15 @@ pytest --cov=src/taskcontrol tests/
    - Dentro de cada grupo de prioridad, las más recientes aparecen primero (`created_at DESC`).
 5. **Combinar con filtro de estado**: Filtrar por "En Progreso" y ordenar por prioridad. Comprobar que se muestran únicamente tareas en progreso, ordenadas de mayor a menor urgencia.
 
-### Escenario B: Categorías y Desvinculación Segura sin Borrado en Cascada (HU-08)
+### Escenario B: Categorías, Renombrado, Límites y Desvinculación Segura (HU-08)
 1. **Crear categoría**: Ingresar a `/categories`, crear la categoría "Proyectos Web".
-2. **Intentar duplicado**: Intentar crear nuevamente "proyectos web" (con minúsculas/mayúsculas); verificar que el sistema rechaza el duplicado con mensaje amigable.
-3. **Asignar tareas**: Crear o editar dos tareas asignándoles la categoría "Proyectos Web".
-4. **Filtrar por categoría**: En el listado de tareas, filtrar por "Proyectos Web"; verificar que solo se muestran las dos tareas asignadas.
-5. **Eliminar categoría**: En `/categories`, presionar "Eliminar" en "Proyectos Web".
-6. **Verificar desvinculación segura**: Volver al listado de tareas general. **Comprobar que las dos tareas continúan existiendo y activas**, pero ahora figuran como "Sin categoría" (`category_id = null`). ¡Ninguna tarea fue eliminada!
+2. **Intentar duplicado**: Intentar crear nuevamente "proyectos web" (con minúsculas/mayúsculas); verificar que el sistema rechaza el duplicado con mensaje amigable (unicidad case-insensitive).
+3. **Validar límite**: Verificar que al alcanzar el límite de 50 categorías, el sistema rechaza la creación de una 51.ª categoría con error HTTP 400.
+4. **Asignar tareas**: Crear o editar dos tareas asignándoles la categoría "Proyectos Web".
+5. **Renombrar categoría**: Modificar el nombre a "Proyectos Especiales" mediante `POST /categories/<id>/edit`; verificar que las dos tareas continúan asociadas y se registra `CATEGORY_UPDATED` en auditoría.
+6. **Filtrar por categoría**: En el listado de tareas, filtrar por "Proyectos Especiales" (`category=<id>`); verificar que solo se muestran las dos tareas asignadas. Probar también filtro por tareas sin categoría (`category=uncategorized`).
+7. **Eliminar categoría**: En `/categories`, presionar "Eliminar" en "Proyectos Especiales".
+8. **Verificar desvinculación segura**: Volver al listado de tareas general. **Comprobar que las dos tareas continúan existiendo y activas**, pero ahora figuran como "Sin categoría" (`category_id = null`). ¡Ninguna tarea fue eliminada!
 
 ### Escenario C: Indicación de Tareas Vencidas Calculada en Backend (HU-09)
 1. **Crear tarea vencida**: Registrar una tarea en estado "Pendiente" con fecha límite de ayer.

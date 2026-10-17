@@ -83,6 +83,7 @@ En estricto cumplimiento del Principio VII (Seguridad por defecto), **todas las 
   - `csrf_token`: Obligatorio y válido contra la sesión activa.
   - `name`: Obligatorio, cadena no vacía tras aplicar `.strip()`, longitud entre 1 y 50 caracteres.
   - **Unicidad por usuario**: No debe existir otra categoría activa para el mismo `user_id` con el mismo nombre (comparación insensible a mayúsculas/minúsculas).
+  - **Límite máximo por cuenta**: El usuario no puede poseer más de 50 categorías activas.
 - **Respuestas**:
   - `302 Found` (Navegador): Redirección a `/categories` con mensaje flash `"Categoría 'Finanzas' creada exitosamente."`.
   - `201 Created` (API/JSON):
@@ -105,6 +106,14 @@ En estricto cumplimiento del Principio VII (Seguridad por defecto), **todas las 
       "message": "El nombre de la categoría es obligatorio y debe contener entre 1 y 50 caracteres."
     }
     ```
+  - `400 Bad Request` (Límite máximo alcanzado):
+    ```json
+    {
+      "status": "error",
+      "code": "CATEGORY_LIMIT_EXCEEDED",
+      "message": "Ha alcanzado el límite máximo de 50 categorías permitidas por cuenta."
+    }
+    ```
   - `409 Conflict` (Nombre duplicado para este usuario):
     ```json
     {
@@ -116,9 +125,68 @@ En estricto cumplimiento del Principio VII (Seguridad por defecto), **todas las 
 
 ---
 
-## 3. Eliminación Segura de Categoría (`HU-08`)
+## 3. Renombrado de Categorías (`HU-08`)
 
-### 3.1 `POST /categories/<int:category_id>/delete`
+### 3.1 `POST /categories/<int:category_id>/edit`
+- **Descripción**: Modifica el nombre de una categoría existente del usuario autenticado y genera un evento de auditoría (`CATEGORY_UPDATED`). Las tareas asociadas conservan intacta su relación referencial (`category_id`).
+- **Autenticación requerida**: **SÍ** (`@login_required`).
+- **Protección CSRF**: Requerida.
+- **Payload de Entrada** (`application/x-www-form-urlencoded` o `application/json`):
+  ```json
+  {
+    "name": "Finanzas Personales",
+    "csrf_token": "IjE2...<token_csrf_valido>"
+  }
+  ```
+- **Validaciones en Backend**:
+  - `csrf_token`: Obligatorio y válido.
+  - La categoría debe existir y pertenecer al usuario autenticado (si no existe o es ajena, responde `404 Not Found`).
+  - `name`: Obligatorio, cadena no vacía tras `.strip()`, longitud entre 1 y 50 caracteres.
+  - **Unicidad por usuario**: No debe coincidir (case-insensitive) con otra categoría del mismo usuario (excluyendo la actual).
+- **Respuestas**:
+  - `302 Found` (Navegador): Redirección a `/categories` con mensaje flash `"Categoría renombrada exitosamente."`.
+  - `200 OK` (API/JSON):
+    ```json
+    {
+      "status": "success",
+      "message": "Categoría renombrada exitosamente",
+      "data": {
+        "id": 3,
+        "name": "Finanzas Personales",
+        "previous_name": "Finanzas"
+      }
+    }
+    ```
+  - `400 Bad Request` (Nombre inválido):
+    ```json
+    {
+      "status": "error",
+      "code": "INVALID_CATEGORY_NAME",
+      "message": "El nombre de la categoría es obligatorio y debe contener entre 1 y 50 caracteres."
+    }
+    ```
+  - `404 Not Found` (Categoría ajena o inexistente):
+    ```json
+    {
+      "status": "error",
+      "code": "CATEGORY_NOT_FOUND",
+      "message": "La categoría solicitada no existe o no tiene permisos para acceder a ella."
+    }
+    ```
+  - `409 Conflict` (Nombre duplicado):
+    ```json
+    {
+      "status": "error",
+      "code": "CATEGORY_ALREADY_EXISTS",
+      "message": "Ya posee una categoría con el nombre especificado."
+    }
+    ```
+
+---
+
+## 4. Eliminación Segura de Categoría (`HU-08`)
+
+### 4.1 `POST /categories/<int:category_id>/delete`
 - **Descripción**: Elimina la categoría especificada. **Regla innegociable de negocio**: Esta acción **NUNCA** elimina en cascada las tareas asociadas. A nivel relacional (`ON DELETE SET NULL`), todas las tareas que pertenecían a esta categoría son automáticamente desvinculadas, quedando con `category_id = null`.
 - **Autenticación requerida**: **SÍ** (`@login_required`).
 - **Protección CSRF**: Requerida.
@@ -155,9 +223,9 @@ En estricto cumplimiento del Principio VII (Seguridad por defecto), **todas las 
 
 ---
 
-## 4. Asignación de Tarea a Categoría (`HU-08`)
+## 5. Asignación de Tarea a Categoría (`HU-08`)
 
-### 4.1 `POST /tasks/<int:task_id>/category`
+### 5.1 `POST /tasks/<int:task_id>/category`
 - **Descripción**: Asigna una tarea a una categoría del usuario o la desvincula de cualquier categoría (`category_id = null`). Emite el evento de auditoría `TASK_CATEGORY_ASSIGNED`.
 - **Autenticación requerida**: **SÍ** (`@login_required`).
 - **Protección CSRF**: Requerida.

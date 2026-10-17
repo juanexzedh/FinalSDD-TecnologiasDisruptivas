@@ -9,10 +9,10 @@
 ## Summary
 
 Implementar el tercer incremento funcional de TaskControl (Organización y Priorización de Tareas) respetando estrictamente los 8 principios constitucionales del proyecto y consolidando la arquitectura monolítica en 4 capas ya establecida:
-1. **Prioridad de tareas (HU-07)**: Incorporación del campo `priority` (`'high'`, `'medium'`, `'low'`) en el modelo `Task` con valor por defecto canónico `'medium'`, ordenamiento ponderado descendente por urgencia (`high` $\rightarrow$ `medium` $\rightarrow$ `low`) con desempate por fecha de creación descendente, y endpoint dedicado para actualización rápida de prioridad.
-2. **Entidad y gestión de Categorías (HU-08)**: Nueva entidad `Category` vinculada al usuario (`user_id`), con validación de nombre obligatorio (1-50 caracteres) y restricción de unicidad por usuario. Implementación de relación opcional en `Task` (`category_id` nullable) configurada a nivel de base de datos relacional con `ON DELETE SET NULL`, garantizando que eliminar una categoría jamás elimine sus tareas en cascada sino que las desvincule de forma segura y transparente.
-3. **Indicador de tareas vencidas calculado en backend (HU-09)**: Cálculo del indicador `is_overdue` resuelto exclusivamente en el servidor (en memoria como `@property` y en la capa de servicios), nunca persistido como columna física de base de datos para no requerir procesos asíncronos en segundo plano (Principio I y V). Exclusión estricta de tareas completadas (`status = 'completed'`) o eliminadas lógicamente (`is_deleted = True`) del cálculo de vencimiento.
-4. **Extensión del listado de tareas (HU-02)**: Ampliación de `GET /tasks` para soportar ordenamiento por prioridad (`sort_by=priority`) y filtrado por categoría (`category_id=all|none|<id>`) en composición ortogonal, sin romper ni alterar los filtros de estado existentes.
+1. **Prioridad de tareas (HU-07)**: Incorporación del campo `priority` (`'high'`, `'medium'`, `'low'`) en el modelo `Task` con valor por defecto canónico `'medium'`, ordenamiento ponderado descendente por urgencia (`high` $\rightarrow$ `medium` $\rightarrow$ `low`) con desempate por fecha de creación descendente, y endpoint dedicado para actualización rápida de prioridad (registrando auditoría `TASK_UPDATED` con metadatos `old_priority` y `new_priority`).
+2. **Entidad y gestión de Categorías (HU-08)**: Nueva entidad `Category` vinculada al usuario (`user_id`), con validación de nombre obligatorio (1-50 caracteres, unicidad case-insensitive tras normalización/trim), límite máximo de hasta 50 categorías por cuenta y capacidad de renombrar categorías preservando intactas las tareas asociadas (con auditoría `CATEGORY_UPDATED` registrando `old_name` y `new_name`). Implementación de relación opcional en `Task` (`category_id` nullable) configurada a nivel de base de datos relacional con `ON DELETE SET NULL`, garantizando que eliminar una categoría jamás elimine sus tareas en cascada sino que las desvincule de forma segura y transparente.
+3. **Indicador de tareas vencidas calculado en backend (HU-09)**: Cálculo del indicador `is_overdue` resuelto exclusivamente en el servidor (en memoria como `@property` y en la capa de servicios) contrastando contra la fecha actual en UTC (`due_date < datetime.now(timezone.utc).date()`), donde la fecha del día en curso no se considera vencida (vence formalmente a las 00:00:00 UTC del día siguiente). Exclusión estricta de tareas completadas (`status = 'completed'`) o eliminadas lógicamente (`is_deleted = True`) del cálculo de vencimiento.
+4. **Extensión del listado de tareas (HU-02)**: Ampliación de `GET /tasks` para soportar combinaciones acumulativas ortogonales (`AND`) entre filtros de estado (`status`), filtrado por categoría (`category=all|uncategorized|<id>`) y ordenamiento (`sort=priority|created_at`), sin romper compatibilidad.
 5. **Migración versionada con integridad total (Principio VI)**: Script incremental con Flask-Migrate que utiliza `server_default='medium'`, garantizando que todas las tareas preexistentes de los Incrementos 1 y 2 permanezcan intactas y funcionales.
 6. **Desarrollo Test-First (TDD) bloqueante (Principio IV)**: Pruebas automatizadas a nivel de modelo/servicio que certifican el ordenamiento por prioridad, la desvinculación sin cascada al borrar categorías y la imposibilidad de que una tarea completada o eliminada se catalogue como vencida.
 
@@ -54,7 +54,7 @@ Implementar el tercer incremento funcional de TaskControl (Organización y Prior
 | **V. Simplicidad sobre generalidad prematura** | **PASS** | Filosofía YAGNI: (1) Prioridad como columna de texto con ponderación SQL `case()` en vez de crear tablas de catálogo relacional redundantes; (2) Desvinculación de categorías resuelta con la cláusula SQL estándar `ON DELETE SET NULL`; (3) Vencimiento calculado como `@property` en memoria ($O(1)$) sin esquemas de almacenamiento periódico. |
 | **VI. Integridad de datos y migraciones** | **PASS** | Clave foránea nullable con política `ON DELETE SET NULL` a nivel DDL de base de datos. Script de migración con Flask-Migrate con `server_default='medium'`, asegurando que ninguna tarea existente de los Incrementos 1 y 2 sufra inconsistencias o pérdidas. |
 | **VII. Seguridad por defecto** | **PASS** | Validación estricta en backend: nombre de categoría limpio y recortado, verificación de unicidad por usuario, validación de que un usuario no pueda asignar categorías de otros usuarios (prevención de IDOR), y protección CSRF obligatoria en todos los métodos POST. |
-| **VIII. Observabilidad mínima viable** | **PASS** | Ampliación del log estructurado de auditoría en `audit_logs` con nuevos eventos inmutables: `TASK_PRIORITY_CHANGED`, `TASK_CATEGORY_ASSIGNED`, `CATEGORY_CREATED`, `CATEGORY_UPDATED` y `CATEGORY_DELETED`. |
+| **VIII. Observabilidad mínima viable** | **PASS** | Ampliación del log estructurado de auditoría en `audit_logs` con eventos inmutables: `TASK_UPDATED` (capturando metadatos `old_priority` y `new_priority` al modificar prioridad), `TASK_CATEGORY_ASSIGNED`, `CATEGORY_CREATED`, `CATEGORY_UPDATED` (con metadatos `old_name` y `new_name` al renombrar) y `CATEGORY_DELETED`. |
 
 ---
 
@@ -96,8 +96,8 @@ src/
     ├── services/                        # Capa 2: Lógica de negocio y dominio (TDD bloqueante)
     │   ├── __init__.py
     │   ├── auth_service.py              # Servicio de autenticación
-    │   ├── category_service.py          # NUEVO: CategoryService (crear, listar, eliminar con desvinculación)
-    │   ├── task_service.py              # EXTENDIDO: get_user_tasks(sort_by, category_id), set_task_priority, assign_category
+    │   ├── category_service.py          # NUEVO: CategoryService (crear con límite de 50, listar, renombrar, eliminar con desvinculación)
+    │   ├── task_service.py              # EXTENDIDO: get_user_tasks(status, category, sort), set_task_priority, assign_category
     │   ├── recovery_service.py          # Servicio de recuperación de claves
     │   ├── email_service.py             # Emulación de correos
     │   └── audit_service.py             # Auditoría estructurada JSON
@@ -105,14 +105,14 @@ src/
     ├── blueprints/                      # Capa 3: Controladores HTTP y protección CSRF
     │   ├── __init__.py
     │   ├── auth.py                      # Rutas de autenticación y reseteo
-    │   ├── categories.py                # NUEVO: Blueprint /categories (GET /categories, POST /categories, POST /<id>/delete)
+    │   ├── categories.py                # NUEVO: Blueprint /categories (GET /categories, POST /categories, POST /<id>/edit, POST /<id>/delete)
     │   ├── tasks.py                     # EXTENDIDO: POST /tasks/<id>/priority, POST /tasks/<id>/category, GET /tasks ampliado
     │   └── decorators.py                # Decorador @login_required
     │
     ├── templates/                       # Capa 4A: Presentación Jinja2 con CSRF
     │   ├── base.html                    # Layout base con enlace a Categorías en navbar y meta csrf-token
     │   ├── categories/
-    │   │   └── index.html               # NUEVO: Vista de gestión de categorías y creación
+    │   │   └── index.html               # NUEVO: Vista de gestión de categorías (crear, renombrar y eliminar)
     │   └── tasks/
     │       ├── index.html               # ACTUALIZADO: Controles de orden por prioridad, filtro por categoría y badges
     │       ├── new.html                 # ACTUALIZADO: Selectores de prioridad (default Media) y categoría opcional
@@ -232,6 +232,18 @@ class Category(db.Model):
      - Se emite el evento de auditoría `AuditService.record_category_event(actor_id=user_id, action='CATEGORY_DELETED', category_id=category_id, details={'category_name': category.name})`.
      - Se confirma la transacción con `db.session.commit()`.
 
+#### Reglas de Negocio Adicionales en `CategoryService` (Clarificaciones)
+1. **Unicidad insensible a mayúsculas/minúsculas (`case-insensitive`)**:
+   - El nombre se valida no vacío tras `.strip()`, rechazando cadenas vacías o solo espacios.
+   - La unicidad por usuario se verifica evaluando el nombre normalizado en minúsculas (`func.lower(Category.name) == func.lower(normalized_name)`), impidiendo que un usuario registre variaciones como "Trabajo" y "trabajo".
+2. **Límite máximo de 50 categorías por cuenta**:
+   - Antes de registrar una nueva categoría, `CategoryService.create_category(user_id, name)` valida que el usuario posea menos de 50 categorías (`Category.query.filter_by(user_id=user_id).count() < 50`).
+   - Si se intenta crear la categoría 51, se rechaza lanzando `CategoryLimitExceededError` (HTTP 400).
+3. **Renombrado de categorías (`update_category`)**:
+   - `CategoryService.update_category(user_id, category_id, new_name)` permite actualizar el nombre de una categoría existente perteneciente al usuario.
+   - Las tareas asociadas conservan intacta su vinculación referencial sin alteración (`tasks.category_id` apunta a la misma PK).
+   - Registra en auditoría el evento `CATEGORY_UPDATED` con metadatos `{"old_name": old_name, "new_name": new_name}`.
+
 ---
 
 ### 3. Contrato de los Nuevos Endpoints y Extensión del Listado (Punto 3 del Requerimiento)
@@ -244,7 +256,7 @@ class Category(db.Model):
   - Tarea debe existir y pertenecer al usuario autenticado.
   - Tarea no debe estar eliminada (`is_deleted == False`).
   - Prioridad debe ser una de `{'high', 'medium', 'low'}`; cualquier otro valor arroja `InvalidPriorityError` (HTTP 400).
-  - Emite auditoría inmutable: `TASK_PRIORITY_CHANGED` con `previous_priority` y `new_priority`.
+  - Emite auditoría inmutable: `TASK_UPDATED` con metadatos de estado previo y posterior (`old_priority` y `new_priority`).
 - **Respuesta**: `302 Found` (redirección a `/tasks`) o `200 OK` JSON con `{ "status": "success", "data": { "id": task_id, "priority": "high" } }`.
 
 #### 3.2 Crear Categoría: `POST /categories`
@@ -253,18 +265,31 @@ class Category(db.Model):
 - **Payload**: `{ "name": "Nombre de categoría", "csrf_token": "..." }`.
 - **Reglas de Dominio**:
   - `name`: cadena no vacía tras `.strip()`, longitud entre 1 y 50 caracteres.
-  - Unicidad por usuario: si ya existe una categoría con ese nombre para el usuario (comparación case-insensitive), se lanza `DuplicateCategoryNameError` (HTTP 409 o 400).
+  - Unicidad por usuario: si ya existe una categoría con ese nombre para el usuario (comparación insensible a mayúsculas/minúsculas `case-insensitive`), se lanza `DuplicateCategoryNameError` (HTTP 409 o 400).
+  - Límite de categorías: límite máximo de hasta 50 categorías por usuario; si se supera, el backend rechaza la solicitud limpiamente lanzando `CategoryLimitExceededError` (HTTP 400).
   - Emite auditoría: `CATEGORY_CREATED`.
 - **Respuesta**: `302 Found` (redirección a `/categories`) o `201 Created` JSON con `{ "status": "success", "data": { "id": 1, "name": "..." } }`.
 
-#### 3.3 Listar Categorías: `GET /categories`
+#### 3.3 Renombrar Categoría: `POST /categories/<int:category_id>/edit`
+- **Controlador**: `src/taskcontrol/blueprints/categories.py` delegando en `CategoryService.update_category(user_id, category_id, name)`.
+- **Seguridad**: `@login_required` + token CSRF.
+- **Payload**: `{ "name": "Nuevo nombre", "csrf_token": "..." }`.
+- **Reglas de Dominio**:
+  - `name`: obligatorio, no vacío tras `.strip()`, longitud entre 1 y 50 caracteres.
+  - Unicidad case-insensitive para el mismo usuario (excluyendo la propia categoría).
+  - La categoría debe existir y pertenecer al usuario autenticado (si pertenece a otro usuario o no existe, responde `404 Not Found`).
+  - **Preservación referencial**: Las tareas asociadas conservan intacta su relación referencial con la categoría (`tasks.category_id` no cambia).
+  - Emite auditoría: `CATEGORY_UPDATED` con metadatos `{"old_name": old_name, "new_name": new_name}`.
+- **Respuesta**: `302 Found` (redirección a `/categories`) o `200 OK` JSON con `{ "status": "success", "data": { "id": category_id, "name": "Nuevo nombre" } }`.
+
+#### 3.4 Listar Categorías: `GET /categories`
 - **Controlador**: `src/taskcontrol/blueprints/categories.py` delegando en `CategoryService.get_user_categories(user_id)`.
 - **Seguridad**: `@login_required`.
 - **Respuesta**:
   - Navegador: Renderiza plantilla `categories/index.html` con listado de categorías y conteo de tareas activas.
   - JSON: `200 OK` con `{ "status": "success", "data": { "categories": [...], "total": N } }`.
 
-#### 3.4 Eliminar Categoría: `POST /categories/<int:category_id>/delete`
+#### 3.5 Eliminar Categoría: `POST /categories/<int:category_id>/delete`
 - **Controlador**: `src/taskcontrol/blueprints/categories.py` delegando en `CategoryService.delete_category(user_id, category_id)`.
 - **Seguridad**: `@login_required` + token CSRF.
 - **Reglas de Dominio**:
@@ -273,7 +298,7 @@ class Category(db.Model):
   - Emite auditoría: `CATEGORY_DELETED`.
 - **Respuesta**: `302 Found` a `/categories` con flash confirmando que las tareas fueron preservadas y desvinculadas, o `200 OK` JSON.
 
-#### 3.5 Asignar Tarea a Categoría: `POST /tasks/<int:task_id>/category`
+#### 3.6 Asignar Tarea a Categoría: `POST /tasks/<int:task_id>/category`
 - **Controlador**: `src/taskcontrol/blueprints/tasks.py` delegando en `TaskService.assign_task_category(user_id, task_id, category_id)`.
 - **Seguridad**: `@login_required` + token CSRF.
 - **Payload**: `{ "category_id": 2 | null | "", "csrf_token": "..." }`.
@@ -283,30 +308,37 @@ class Category(db.Model):
   - Emite auditoría: `TASK_CATEGORY_ASSIGNED` con `previous_category_id` y `new_category_id`.
 - **Respuesta**: `302 Found` o `200 OK` JSON.
 
-#### 3.6 Extensión del Endpoint de Listado: `GET /tasks`
+#### 3.7 Extensión del Endpoint de Listado: `GET /tasks`
 - **Parámetros Query Soportados**:
   - `status`: `'all'` (defecto), `'pending'`, `'in_progress'`, `'completed'`. (Compatibilidad total con Incrementos 1 y 2).
-  - `sort_by`: `'created_desc'` (defecto), `'priority'`.
-  - `category_id`: `'all'` (defecto), `'none'`, `<int>`.
+  - `category`: `'all'` (defecto), `'uncategorized'`, `<int>` (ID numérico de la categoría). Soporte retrocompatible para `category_id` y `'none'`.
+  - `sort`: `'created_at'` (defecto), `'priority'`. Soporte retrocompatible para `sort_by` y `'created_desc'`.
 - **Implementación en `TaskService.get_user_tasks`**:
   ```python
-  def get_user_tasks(user_id: int, status: str = 'all', sort_by: str = 'created_desc', category_id: str | int = 'all'):
+  def get_user_tasks(user_id: int, status: str = 'all', category: str | int = 'all', sort: str = 'created_at', **kwargs):
+      # Compatibilidad de alias de parámetros
+      category_param = kwargs.get('category_id', category)
+      sort_param = kwargs.get('sort_by', sort)
+
       query = Task.query.filter(Task.user_id == user_id, Task.is_deleted == False)
 
       # 1. Filtro por estado existente (sin alteraciones)
       if status != 'all':
           query = query.filter(Task.status == status)
 
-      # 2. Filtro por categoría (nuevo)
-      if str(category_id) == 'none':
+      # 2. Filtro por categoría acumulativo (AND)
+      if str(category_param) in ('uncategorized', 'none'):
           query = query.filter(Task.category_id.is_(None))
-      elif str(category_id) != 'all':
-          cat_id_int = int(category_id)
-          # Verificar pertenencia al usuario
-          query = query.filter(Task.category_id == cat_id_int)
+      elif str(category_param) != 'all':
+          try:
+              cat_id_int = int(category_param)
+              # Si se envía un ID inexistente o ajeno, filtra sin revelar datos ajenos
+              query = query.filter(Task.category_id == cat_id_int)
+          except (ValueError, TypeError):
+              pass
 
       # 3. Ordenamiento ortogonal (nuevo)
-      if sort_by == 'priority':
+      if sort_param == 'priority':
           priority_weight = db.case(
               {'high': 3, 'medium': 2, 'low': 1},
               value=Task.priority,
@@ -318,7 +350,7 @@ class Category(db.Model):
 
       return query.all()
   ```
-- **Garantía**: El filtro de estado se aplica de forma ortogonal e independiente del filtro de categoría y del ordenamiento. El usuario puede consultar tareas "en progreso" ordenadas por prioridad pertenecientes a una categoría específica sin conflicto.
+- **Garantía**: Combinación simultánea acumulativa ortogonal (`AND`) de parámetros `status`, `category` y `sort`. Si se envía una categoría inexistente o perteneciente a otro usuario, la consulta relacional responde con lista vacía o rechazo 404/400 sin filtrar ni exponer información de otros usuarios.
 
 ---
 
@@ -349,7 +381,7 @@ class Category(db.Model):
 - **Exclusión explícita de tareas completadas y eliminadas**:
   - Si `task.status == 'completed'`, `is_overdue` retorna `False` sin importar cuán antigua sea la `due_date`.
   - Si `task.is_deleted == True`, `is_overdue` retorna `False`.
-  - Tareas con fecha límite para el día de hoy: `due_date == today` retorna `False` (el usuario tiene hasta el final del día actual para completarla; sólo se considera vencida a partir del día siguiente).
+  - Tareas con fecha límite para el día de hoy: evaluada la fecha actual del servidor en UTC (`datetime.now(timezone.utc).date()`), una tarea con fecha límite de hoy NO se considera vencida durante toda la jornada; pasa a considerarse vencida formalmente a partir de las 00:00:00 UTC del día calendario posterior.
 - **Consumo en la Capa de Presentación**:
   - En la respuesta JSON de `GET /tasks`, cada tarea serializada contiene `"is_overdue": task.is_overdue`.
   - En las plantillas Jinja2 (`tasks/index.html`), se evalúa `{% if task.is_overdue %}<span class="badge badge-overdue">Vencida</span>{% endif %}`.
@@ -410,23 +442,25 @@ Para incorporar los nuevos campos y la nueva tabla sin alterar los datos preexis
 
 Conforme al Principio IV (Test-First bloqueante), ninguna línea de la capa de dominio o servicios será implementada sin contar previamente con pruebas unitarias en rojo que cubran exhaustivamente las siguientes condiciones críticas:
 
-#### 6.1 Pruebas de Ordenamiento por Prioridad (`tests/unit/test_task_service.py`)
+#### 6.1 Pruebas de Ordenamiento y Modificación de Prioridad (`tests/unit/test_task_service.py`)
 1. **`test_tasks_sorted_by_priority_descending`**:
    - *Escenario*: Se crean tareas con prioridades `'low'`, `'high'`, `'medium'`.
-   - *Aserción*: Al invocar `get_user_tasks(user_id, sort_by='priority')`, las tareas se retornan en el orden estricto `high` $\rightarrow$ `medium` $\rightarrow$ `low`.
+   - *Aserción*: Al invocar `get_user_tasks(user_id, sort='priority')`, las tareas se retornan en el orden estricto `high` $\rightarrow$ `medium` $\rightarrow$ `low`.
 2. **`test_tasks_priority_tiebreak_by_created_at_desc`**:
    - *Escenario*: Se crean tres tareas con idéntica prioridad `'high'` en marcas temporales consecutivas $t_1, t_2, t_3$.
    - *Aserción*: Al ordenar por prioridad, el desempate secundario coloca primero la más reciente ($t_3 \rightarrow t_2 \rightarrow t_1$).
-3. **`test_priority_sorting_combined_with_status_filter`**:
-   - *Escenario*: Múltiples tareas en diferentes estados y prioridades.
-   - *Aserción*: Filtrar por `status='in_progress'` y `sort_by='priority'` devuelve exclusivamente las tareas en progreso ordenadas por prioridad.
+3. **`test_priority_sorting_combined_with_status_and_category_filter`**:
+   - *Escenario*: Múltiples tareas en diferentes estados, categorías y prioridades.
+   - *Aserción*: Filtrar por `status='in_progress'`, `category=cat_id` y `sort='priority'` devuelve exclusivamente las tareas en progreso de dicha categoría ordenadas por prioridad acumulativa (`AND`).
 4. **`test_default_priority_is_medium_on_creation`**:
    - *Aserción*: Toda tarea creada sin especificar prioridad adquiere `'medium'`.
 5. **`test_invalid_priority_raises_domain_error`**:
    - *Aserción*: Intentar asignar una prioridad distinta a `{'high', 'medium', 'low'}` lanza `InvalidPriorityError`.
+6. **`test_priority_update_records_audit_task_updated`**:
+   - *Aserción*: Modificar la prioridad emite en el log de auditoría el evento `TASK_UPDATED` con metadatos `old_priority` y `new_priority`.
 
-#### 6.2 Pruebas de Desvinculación de Categorías sin Eliminación en Cascada (`tests/unit/test_category_service.py`)
-6. **`test_delete_category_unlinks_tasks_setting_category_id_to_null`**:
+#### 6.2 Pruebas de Categorías, Renombrado, Límites y Desvinculación Segura (`tests/unit/test_category_service.py`)
+7. **`test_delete_category_unlinks_tasks_setting_category_id_to_null`**:
    - *Escenario*: Se crea una categoría y se le asocian 3 tareas activas.
    - *Acción*: Se invoca `CategoryService.delete_category(user_id, category_id)`.
    - *Aserción Bloqueante*:
@@ -434,27 +468,35 @@ Conforme al Principio IV (Test-First bloqueante), ninguna línea de la capa de d
      - **Las 3 tareas siguen existiendo íntegras** (`Task.query.filter_by(user_id=user_id).count() == 3`).
      - Ninguna tarea tiene `is_deleted == True`.
      - Las 3 tareas tienen `category_id is None`.
-7. **`test_category_name_unique_per_user_case_insensitive`**:
-   - *Aserción*: Intentar crear una categoría con nombre duplicado (e.g., "Proyectos" y "proyectos") para el mismo usuario lanza `DuplicateCategoryNameError`.
-8. **`test_cannot_assign_category_from_another_user`**:
+8. **`test_category_name_unique_per_user_case_insensitive`**:
+   - *Aserción*: Intentar crear una categoría con nombre duplicado (e.g., "Trabajo" y "trabajo") para el mismo usuario lanza `DuplicateCategoryNameError`.
+9. **`test_cannot_assign_category_from_another_user`**:
    - *Aserción*: Intentar asignar una tarea a una categoría perteneciente a otro usuario es rechazado con excepción de seguridad de dominio.
+10. **`test_cannot_create_more_than_50_categories_per_user`**:
+    - *Escenario*: Usuario que ya posee 50 categorías intenta crear una más.
+    - *Aserción*: El sistema rechaza la creación lanzando `CategoryLimitExceededError` (HTTP 400).
+11. **`test_rename_category_preserves_task_links_and_records_audit`**:
+    - *Escenario*: Categoría con 2 tareas asociadas se renombra a un nuevo nombre válido.
+    - *Aserción*: Se actualiza el nombre, las 2 tareas siguen vinculadas a la misma categoría y se registra el evento `CATEGORY_UPDATED` con `old_name` y `new_name`.
 
-#### 6.3 Pruebas de Cálculo de Vencimiento (`tests/unit/test_task_service.py`)
-9. **`test_completed_task_with_past_due_date_is_never_overdue`**:
-   - *Escenario*: Tarea con `due_date = ayer` y `status = 'completed'`.
-   - *Aserción Bloqueante*: `task.is_overdue` es deterministamente `False`.
-10. **`test_soft_deleted_task_with_past_due_date_is_never_overdue`**:
+#### 6.3 Pruebas de Cálculo de Vencimiento y Filtros Acumulativos (`tests/unit/test_task_service.py`)
+12. **`test_completed_task_with_past_due_date_is_never_overdue`**:
+    - *Escenario*: Tarea con `due_date = ayer` y `status = 'completed'`.
+    - *Aserción Bloqueante*: `task.is_overdue` es deterministamente `False`.
+13. **`test_soft_deleted_task_with_past_due_date_is_never_overdue`**:
     - *Escenario*: Tarea eliminada lógicamente (`is_deleted = True`) con `due_date = ayer`.
     - *Aserción Bloqueante*: `task.is_overdue` es deterministamente `False`.
-11. **`test_pending_or_in_progress_task_with_past_due_date_is_overdue`**:
+14. **`test_pending_or_in_progress_task_with_past_due_date_is_overdue`**:
     - *Escenario*: Tarea activa (`pending` o `in_progress`) con `due_date = ayer`.
     - *Aserción Bloqueante*: `task.is_overdue` es deterministamente `True`.
-12. **`test_task_with_due_date_today_is_not_overdue`**:
-    - *Escenario*: Tarea con `due_date = hoy`.
+15. **`test_task_with_due_date_today_is_not_overdue_utc`**:
+    - *Escenario*: Tarea con `due_date = hoy` evaluada en UTC.
     - *Aserción*: `task.is_overdue` es `False`.
-13. **`test_task_without_due_date_is_not_overdue`**:
+16. **`test_task_without_due_date_is_not_overdue`**:
     - *Escenario*: Tarea con `due_date = None`.
     - *Aserción*: `task.is_overdue` es `False`.
+17. **`test_filter_uncategorized_and_nonexistent_category_isolation`**:
+    - *Escenario*: Filtrar por `category='uncategorized'` retorna solo tareas sin categoría. Filtrar por una categoría inexistente o de otro usuario retorna lista vacía sin exponer datos de otros.
 
 ---
 
@@ -465,4 +507,4 @@ Conforme al Principio IV (Test-First bloqueante), ninguna línea de la capa de d
 | **Prioridad como columna `String(20)` con ponderación SQL `case()`** | Simple, directa y legible. Resuelve los 3 niveles requeridos (`high`, `medium`, `low`) con ordenamiento óptimo en una sola consulta SQL, sin introducir tablas relacionales adicionales ni joins innecesarios. | 1. Tabla relacional auxiliar `priorities` (introduce joins costosos y mantenimiento de catálogos para solo 3 constantes estáticas).<br>2. Campo entero libre (1 a 100) que introduce complejidad conceptual y visual innecesaria. |
 | **Desvinculación relacional con `ON DELETE SET NULL` nativo** | Máxima simplicidad e integridad. Delega en el motor de base de datos relacional la responsabilidad de poner en nulo las claves foráneas en una única operación atómica, sin requerir bucles manuales de actualización en Python. | 1. Interceptores o listeners `before_delete` de SQLAlchemy que recorren y actualizan tarea por tarea (propenso a fallos, bloqueos y menor rendimiento).<br>2. Borrado lógico de categorías con banderas booleanas (`is_deleted`), innecesario dado que las categorías no requieren auditoría de reapertura. |
 | **Cálculo de `is_overdue` como `@property` en memoria** | Costo $O(1)$, exactitud absoluta en UTC y cero mantenimiento. Elimina por completo la necesidad de almacenar un estado redundante que caduca a diario. | 1. Columna booleana persistida `is_overdue` mantenida mediante Celery Beat o cron jobs nocturnos (violación directa del Principio I al exigir procesos desacoplados fuera del monolito).<br>2. Triggers de base de datos dependientes del reloj del sistema del motor SQL (rompe la portabilidad entre SQLite y PostgreSQL). |
-| **Filtro composicional directo en `TaskService`** | Permite combinar `status`, `category_id` y `sort_by` mediante métodos estándar de SQLAlchemy (`filter`, `order_by`) de forma transparente y legible. | 1. Adopción de GraphQL o bibliotecas pesadas de query builders dinámicos.<br>2. Creación de endpoints especializados separados para cada combinación posible de filtros (`/tasks/by-category`, `/tasks/by-priority`), lo que duplicaría controladores y vistas. |
+| **Filtro composicional directo en `TaskService`** | Permite combinar `status`, `category` y `sort` mediante métodos estándar de SQLAlchemy (`filter`, `order_by`) de forma transparente y legible. | 1. Adopción de GraphQL o bibliotecas pesadas de query builders dinámicos.<br>2. Creación de endpoints especializados separados para cada combinación posible de filtros (`/tasks/by-category`, `/tasks/by-priority`), lo que duplicaría controladores y vistas. |
