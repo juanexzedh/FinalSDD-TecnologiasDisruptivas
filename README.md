@@ -13,5 +13,6 @@ Generar clave: python -c "import secrets; print(secrets.token_hex(32))"
 El enlace de "Recuperar contraseña" aparece en la consola donde corre `flask run` (ConsoleEmailSender).
 
 ## Historias cubiertas
-HU-01, 02, 03, 04, 12, 13 (incremento 001) y HU-05, 06, 14 (incremento 002).
-NO implementadas: HU-07, 08, 09 (003), HU-10, 11 (004), HU-15, 16 (005).
+HU-01 a 09, HU-12, HU-13 y HU-14 (incrementos 001, 002 y 003): 12 de 16.
+NO implementadas: HU-10, 11 (004) y HU-15, 16 (005); tienen spec, clarify y plan.
+Pruebas: 151 (pytest -v).

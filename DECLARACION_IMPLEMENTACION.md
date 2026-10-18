@@ -1,13 +1,10 @@
 # Declaración de implementación (incrementos 001 y 002)
 
 ## Qué es y qué no es
-- El código de `src/`, `tests/` y `migrations/` fue escrito por **Claude en un chat**, a partir de los artefactos
-  de Spec Kit del proyecto (constitución, spec, clarificaciones, planes y contratos de 001 y 002).
-- **No** fue generado por `/speckit-implement` de Antigravity: la cuota de tokens se agotó antes.
-- **No se ejecutaron** `/speckit-analyze` ni `/speckit-implement` en ningún incremento.
-- Esta implementación **reemplaza** el código del incremento 001 que existía en el repositorio (generado por
-  Antigravity fuera de `/speckit-implement`, sin pruebas).
-- Los incrementos 003, 004 y 005 solo llegaron a spec + plan. **No tienen código.**
+- Código de los incrementos 001 y 002: escrito por Claude en un chat (fuera de /speckit-implement, por agotarse la cuota de Antigravity).
+- Código del incremento 003: generado por Antigravity con /speckit-implement (rojo: 49 fallos; verde: 151).
+- Incrementos 004 y 005: sin código. /speckit-analyze se ejecutó solo en 002 y 003.
+- Detalle completo: ver el informe final (TaskControl_Informe_Final_SDD.pdf).
 
 ## Pruebas
 - 102 pruebas (unitarias de servicios + integración HTTP + CSRF). Las del incremento 002 se escribieron
